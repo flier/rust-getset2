@@ -1,0 +1,5 @@
+error: invalid #[get(..)] attribute, cannot find parameter `foobar` in this scope
+ --> tests/compile_error/bad_get.rs:4:1
+  |
+4 | #[get(foobar)]
+  | ^

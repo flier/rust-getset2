@@ -1,0 +1,8 @@
+error: #[derive(Getter)] can only be applied to structure with named fields
+ --> tests/compile_error/enum.rs:4:1
+  |
+4 | / pub enum Enum {
+5 | |     Foo,
+6 | |     Bar,
+7 | | }
+  | |_^

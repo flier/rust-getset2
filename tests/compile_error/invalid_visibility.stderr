@@ -1,0 +1,5 @@
+error: invalid `visibility` for the field, unexpected token
+ --> tests/compile_error/invalid_visibility.rs:5:11
+  |
+5 |     #[get("pub(other)")]
+  |           ^^^^^^^^^^^^

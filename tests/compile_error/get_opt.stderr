@@ -1,0 +1,5 @@
+error: field with #[get(opt)] should be an Option type
+ --> tests/compile_error/get_opt.rs:6:12
+  |
+6 |     field: usize,
+  |            ^^^^^
