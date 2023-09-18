@@ -7,7 +7,8 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os || 'ubuntu' }}-latest
+    continue-on-error: ${{ matrix.rust == 'nightly' }}
     strategy:
       fail-fast: false
       matrix:
@@ -15,7 +16,12 @@ jobs:
           - nightly
           - beta
           - stable
-          - 1.56.0 # MSRV
+          - 1.60 # MSRV
+        include:
+          - rust: stable
+            os: macos
+          - rust: nightly
+            os: windows
     env:
       RUST_BACKTRACE: full
 
