@@ -197,9 +197,11 @@ fn test_string_field() {
 
     let mut foo = Foo::default();
 
-    foo.string_field_mut().push_str("foo");
+    foo.string_field = "foo".to_owned();
 
-    assert_eq!(foo.string_field(), "foo");
+    foo.string_field_mut().make_ascii_uppercase();
+
+    assert_eq!(foo.string_field(), "FOO");
 }
 
 #[derive(Default, Getter)]

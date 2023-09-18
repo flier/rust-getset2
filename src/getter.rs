@@ -134,6 +134,8 @@ impl<'a> ToTokens for Getters<'a> {
                 getter.to_tokens(tokens)
             } else if let Some(getter) = getter.as_mut_slice() {
                 getter.to_tokens(tokens)
+            } else if let Some(getter) = getter.as_mut_str() {
+                getter.to_tokens(tokens)
             } else {
                 getter.to_tokens(tokens)
             }
@@ -523,6 +525,14 @@ impl<'a> MutGetter<'a> {
         }
     }
 
+    fn as_mut_str(&'a self) -> Option<MutStrGetter<'a>> {
+        if self.is_str() {
+            Some(MutStrGetter(self))
+        } else {
+            None
+        }
+    }
+
     fn method_name(&self) -> Ident {
         let prefix = self.prefix().unwrap_or_default();
         let name = self.name();
@@ -587,6 +597,26 @@ impl<'a> ToTokens for MutSliceGetter<'a> {
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut[ #inner_ty ] {
                 #field_name.as_mut_slice()
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, Deref)]
+struct MutStrGetter<'a>(&'a MutGetter<'a>);
+
+impl<'a> ToTokens for MutStrGetter<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let vis = self.vis();
+        let attrs = self.field_attrs;
+        let field_name = self.field_name();
+        let method_name = self.method_name();
+
+        tokens.append_all(quote_spanned! { self.field.span() =>
+            #( #attrs )*
+            #[inline(always)]
+            #vis fn #method_name(&mut self) -> &mut str {
+                #field_name.as_mut_str()
             }
         })
     }
