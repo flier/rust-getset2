@@ -2,7 +2,7 @@ use merge::Merge;
 use proc_macro_error::abort;
 use syn::{
     parse::Parse, spanned::Spanned, AngleBracketedGenericArguments, AttrStyle, Attribute,
-    GenericArgument, PathArguments, Type, TypeArray, TypePath, TypeReference,
+    GenericArgument, PathArguments, Type, TypeArray, TypePath,
 };
 
 pub fn args<'a, I, T>(attrs: I, name: &str) -> (T, Vec<&'a Attribute>)
@@ -90,21 +90,4 @@ pub fn slice_inner_ty(ty: &Type) -> Option<Type> {
         Type::Array(TypeArray { ref elem, .. }) => Some(elem.as_ref().clone()),
         _ => None,
     }
-}
-
-pub fn is_string_ty(ty: &Type) -> bool {
-    is_ty(ty, "String")
-}
-
-pub fn is_ty(ty: &Type, name: &str) -> bool {
-    matches!(ty,
-        Type::Path(TypePath {
-            ref qself,
-            ref path,
-        }) if qself.is_none()
-            && path
-                .segments
-                .last()
-                .map(|s| s.ident == name)
-                .unwrap_or_default())
 }

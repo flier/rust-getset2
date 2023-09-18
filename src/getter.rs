@@ -9,7 +9,7 @@ use syn::{
     FieldsNamed, FieldsUnnamed, Index, LitBool, LitStr, Member, Path, Type, Visibility,
 };
 
-use crate::{extract, vis::Restricted};
+use crate::{extract, ty::TypeExt, vis::Restricted};
 
 #[derive(Clone, Debug, Default, Merge, StructMeta)]
 struct StructArgs {
@@ -358,7 +358,7 @@ impl<'a> Getter<'a> {
             .or(self.struct_args.str.as_bool())
             .unwrap_or_default()
         {
-            if extract::is_string_ty(&self.field.ty) {
+            if self.field.ty.is_string() {
                 return true;
             }
 
