@@ -91,3 +91,16 @@ pub fn slice_inner_ty(ty: &Type) -> Option<Type> {
         _ => None,
     }
 }
+
+pub fn is_str_ty(ty: &Type) -> bool {
+    matches!(ty,
+        Type::Path(TypePath {
+            ref qself,
+            ref path,
+        }) if qself.is_none()
+            && path
+                .segments
+                .last()
+                .map(|s| s.ident == "String")
+                .unwrap_or_default())
+}

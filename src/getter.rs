@@ -22,11 +22,12 @@ struct StructArgs {
     #[struct_meta(name = "mut")]
     #[merge(strategy = merge_flag)]
     mutable: Flag,
-    #[struct_meta(name = "opt")]
     #[merge(strategy = merge_flag)]
-    option: Flag,
+    opt: Flag,
     #[merge(strategy = merge_flag)]
     slice: Flag,
+    #[merge(strategy = merge_flag)]
+    str: Flag,
     prefix: Option<NameValue<LitStr>>,
     suffix: Option<NameValue<LitStr>>,
 }
@@ -41,9 +42,9 @@ struct FieldArgs {
     copy: Option<NameArgs<Option<LitBool>>>,
     #[struct_meta(name = "mut")]
     mutable: Option<NameArgs<Option<LitBool>>>,
-    #[struct_meta(name = "opt")]
-    option: Option<NameArgs<Option<LitBool>>>,
+    opt: Option<NameArgs<Option<LitBool>>>,
     slice: Option<NameArgs<Option<LitBool>>>,
+    str: Option<NameArgs<Option<LitBool>>>,
     rename: Option<LitStr>,
     prefix: Option<NameValue<LitStr>>,
     suffix: Option<NameValue<LitStr>>,
@@ -122,6 +123,8 @@ impl<'a> ToTokens for Getters<'a> {
             getter.to_tokens(tokens)
         } else if let Some(getter) = getter.as_slice() {
             getter.to_tokens(tokens)
+        } else if let Some(getter) = getter.as_str() {
+            getter.to_tokens(tokens)
         } else {
             getter.to_tokens(tokens)
         };
@@ -194,6 +197,14 @@ impl<'a> Getter<'a> {
     fn as_slice(&'a self) -> Option<SliceGetter<'a>> {
         if self.is_slice() {
             Some(SliceGetter(self))
+        } else {
+            None
+        }
+    }
+
+    fn as_str(&'a self) -> Option<StrGetter<'a>> {
+        if self.is_str() {
+            Some(StrGetter(self))
         } else {
             None
         }
@@ -282,16 +293,16 @@ impl<'a> Getter<'a> {
     fn is_option(&self) -> bool {
         if self
             .field_args
-            .option
+            .opt
             .as_bool()
-            .or(self.struct_args.option.as_bool())
+            .or(self.struct_args.opt.as_bool())
             .unwrap_or_default()
         {
             if extract::option_inner_ty(&self.field.ty).is_some() {
                 return true;
             }
 
-            if self.field_args.option.as_bool().unwrap_or_default() {
+            if self.field_args.opt.as_bool().unwrap_or_default() {
                 abort!(
                     self.field.ty.span(),
                     "#[get(opt)] should be applied to an Option type"
@@ -327,6 +338,29 @@ impl<'a> Getter<'a> {
                 abort!(
                     self.field.ty.span(),
                     "#[get(slice)] should be applied to a Vec<T> or an array [T; N] type"
+                );
+            }
+        }
+
+        false
+    }
+
+    fn is_str(&self) -> bool {
+        if self
+            .field_args
+            .str
+            .as_bool()
+            .or(self.struct_args.str.as_bool())
+            .unwrap_or_default()
+        {
+            if extract::is_str_ty(&self.field.ty) {
+                return true;
+            }
+
+            if self.field_args.str.is_some() {
+                abort!(
+                    self.field.ty.span(),
+                    "#[get(str)] should be applied to a String type"
                 );
             }
         }
@@ -450,6 +484,26 @@ impl<'a> ToTokens for SliceGetter<'a> {
 }
 
 #[derive(Clone, Debug, Deref)]
+struct StrGetter<'a>(&'a Getter<'a>);
+
+impl<'a> ToTokens for StrGetter<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let vis = self.vis();
+        let attrs = self.field_attrs;
+        let field_name = self.field_name();
+        let method_name = self.method_name();
+
+        tokens.append_all(quote_spanned! { self.field.span() =>
+            #( #attrs )*
+            #[inline(always)]
+            #vis fn #method_name(&self) -> &str {
+                #field_name.as_str()
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, Deref)]
 struct MutGetter<'a>(&'a Getter<'a>);
 
 impl<'a> MutGetter<'a> {
@@ -472,8 +526,9 @@ impl<'a> MutGetter<'a> {
     fn method_name(&self) -> Ident {
         let prefix = self.prefix().unwrap_or_default();
         let name = self.name();
+        let suffix = self.suffix().unwrap_or_default();
 
-        format_ident!("{}{}_mut", prefix, name.to_string())
+        format_ident!("{}{}{}_mut", prefix, name.to_string(), suffix)
     }
 }
 
