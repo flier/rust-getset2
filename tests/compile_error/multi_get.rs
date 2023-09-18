@@ -5,7 +5,7 @@ use getset2::Getter;
 #[get(mut)]
 pub struct Foo {
     /// multi #[get(..)] will be merged
-    #[get("pub")]
+    #[get(pub)]
     #[get(prefix = "with")]
     bar: usize,
 }

@@ -6,7 +6,7 @@ mod foo {
     use getset2::Getter;
 
     #[derive(Default, Getter)]
-    #[get("pub", prefix = "with", mut)]
+    #[get(pub, prefix = "with", mut)]
     pub struct Foo {
         /// field will use the default visibility (pub), prefix (with) and mutable flags
         field: usize,
@@ -22,11 +22,20 @@ mod foo {
 
         pub public_field: usize,
 
-        #[get("pub")]
+        #[get(pub)]
         pub_field: usize,
 
-        #[get("pub(crate)")]
+        #[get(pub(self), copy)]
+        pub_self_field: usize,
+
+        #[get(pub(crate), copy)]
         pub_crate_field: usize,
+
+        #[get(pub(super), copy)]
+        pub_super_field: usize,
+
+        #[get(pub(in crate::foo))]
+        pub_in_field: usize,
 
         #[get(mut)]
         mut_field: usize,
@@ -58,6 +67,7 @@ mod foo {
         let bar = Bar::default();
 
         assert_eq!(bar.private_field(), &0);
+        assert_eq!(bar.pub_self_field(), 0);
     }
 
     #[test]
@@ -66,6 +76,13 @@ mod foo {
 
         *bar.mut_field_mut() = 1;
         assert_eq!(bar.mut_field(), &1);
+    }
+
+    #[test]
+    fn test_pub_getter() {
+        let bar = Bar::default();
+
+        assert_eq!(bar.pub_in_field(), &0);
     }
 }
 
@@ -81,7 +98,8 @@ fn test_pub_getter() {
     let foobar = foo::Bar::default();
 
     assert_eq!(foobar.pub_field(), &0);
-    assert_eq!(foobar.pub_crate_field(), &0);
+    assert_eq!(foobar.pub_crate_field(), 0);
+    assert_eq!(foobar.pub_super_field(), 0);
 }
 
 #[test]
