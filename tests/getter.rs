@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     ffi::{CStr, CString},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use getset2::Getter;
@@ -236,6 +236,23 @@ fn test_get_bytes() {
     assert_eq!(foo.string_field(), b"string");
     assert_eq!(foo.cstr_field(), b"cstr");
     assert_eq!(foo.cstring_field(), b"cstring");
+}
+
+#[test]
+fn test_get_borrow() {
+    #[derive(Default, Getter)]
+    struct Foo {
+        #[get(borrow(Path), mut)]
+        path_field: PathBuf,
+    }
+
+    let mut foo = Foo {
+        path_field: PathBuf::from("/tmp"),
+    };
+
+    foo.path_field_mut().as_mut_os_str().make_ascii_uppercase();
+
+    assert_eq!(foo.path_field(), Path::new("/TMP"));
 }
 
 #[derive(Default, Getter)]

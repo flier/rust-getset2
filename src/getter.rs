@@ -48,6 +48,7 @@ struct FieldArgs {
     slice: Option<NameArgs<Option<Path>>>,
     str: Option<NameArgs<Option<Path>>>,
     bytes: Option<NameArgs<Option<Path>>>,
+    borrow: Option<NameArgs<Type>>,
     rename: Option<LitStr>,
     prefix: Option<NameValue<LitStr>>,
     suffix: Option<NameValue<LitStr>>,
@@ -130,6 +131,8 @@ impl<'a> ToTokens for Getters<'a> {
             StrGetter(&getter).to_tokens(tokens)
         } else if getter.is_bytes() {
             BytesGetter(&getter).to_tokens(tokens)
+        } else if getter.is_borrow() {
+            BorrowGetter(&getter).to_tokens(tokens)
         } else {
             getter.to_tokens(tokens)
         };
@@ -141,6 +144,8 @@ impl<'a> ToTokens for Getters<'a> {
                 MutSliceGetter(&getter).to_tokens(tokens)
             } else if getter.is_str() {
                 MutStrGetter(&getter).to_tokens(tokens)
+            } else if getter.is_borrow() {
+                BorrowMutGetter(&getter).to_tokens(tokens)
             } else {
                 getter.to_tokens(tokens)
             }
@@ -169,6 +174,12 @@ impl AsBool for Option<NameArgs<Option<LitBool>>> {
 }
 
 impl AsBool for Option<NameArgs<Option<Path>>> {
+    fn as_bool(&self) -> Option<bool> {
+        self.as_ref().map(|_| true)
+    }
+}
+
+impl AsBool for Option<NameArgs<Type>> {
     fn as_bool(&self) -> Option<bool> {
         self.as_ref().map(|_| true)
     }
@@ -229,14 +240,18 @@ impl<'a> Getter<'a> {
 
     fn field_name(&self) -> TokenStream2 {
         match self.field.ident {
-            Some(ref name) => quote_spanned! { self.field.span() => self.#name },
+            Some(ref name) => quote_spanned! { self.field.span() =>
+                self.#name
+            },
             None => {
                 let idx = Member::Unnamed(Index {
                     index: self.field_idx as u32,
                     span: self.field.span(),
                 });
 
-                quote_spanned! { self.field.span() => self.#idx }
+                quote_spanned! { self.field.span() =>
+                    self.#idx
+                }
             }
         }
     }
@@ -424,6 +439,21 @@ impl<'a> Getter<'a> {
             }
         }
     }
+
+    fn is_borrow(&self) -> bool {
+        self.field_args.borrow.as_bool().unwrap_or_default()
+    }
+
+    fn borrowed_ty(&self) -> &Type {
+        if let Some(ref arg) = self.field_args.borrow {
+            &arg.args
+        } else {
+            abort!(
+                self.field.span(),
+                "#[get(borrow(..))] should have a borrowed type"
+            );
+        }
+    }
 }
 
 impl<'a> ToTokens for Getter<'a> {
@@ -569,6 +599,27 @@ impl<'a> ToTokens for BytesGetter<'a> {
 }
 
 #[derive(Clone, Debug, Deref)]
+struct BorrowGetter<'a>(&'a Getter<'a>);
+
+impl<'a> ToTokens for BorrowGetter<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let vis = self.vis();
+        let attrs = self.field_attrs;
+        let method_name = self.method_name();
+        let field_name = self.field_name();
+        let borrowed_ty = self.borrowed_ty();
+
+        tokens.append_all(quote_spanned! { self.field.span() =>
+            #( #attrs )*
+            #[inline(always)]
+            #vis fn #method_name(&self) -> & #borrowed_ty {
+                ::std::borrow::Borrow::borrow(& #field_name)
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, Deref)]
 struct MutGetter<'a>(&'a Getter<'a>);
 
 impl<'a> MutGetter<'a> {
@@ -656,6 +707,27 @@ impl<'a> ToTokens for MutStrGetter<'a> {
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut str {
                 #field_name.as_mut_str()
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, Deref)]
+struct BorrowMutGetter<'a>(&'a MutGetter<'a>);
+
+impl<'a> ToTokens for BorrowMutGetter<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let vis = self.vis();
+        let attrs = self.field_attrs;
+        let method_name = self.method_name();
+        let field_name = self.field_name();
+        let borrowed_ty = self.borrowed_ty();
+
+        tokens.append_all(quote_spanned! { self.field.span() =>
+            #( #attrs )*
+            #[inline(always)]
+            #vis fn #method_name(&mut self) -> &mut #borrowed_ty {
+                ::std::borrow::BorrowMut::borrow_mut(&mut #field_name)
             }
         })
     }
