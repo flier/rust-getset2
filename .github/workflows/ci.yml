@@ -6,6 +6,121 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install latest nightly
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
+    - name: update rust
+      run: |
+        rustup update nightly
+        cargo --version
+
+    - name: setup cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: check format
+      run: |
+        cargo fmt --all -- --check
+
+    - name: check lint
+      run: |
+        cargo clippy -- -D warnings
+
+    - name: check deny
+      uses: EmbarkStudios/cargo-deny-action@v1
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install latest nightly
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
+    - name: update rust
+      run: |
+        rustup update nightly
+        cargo --version
+
+    - name: setup cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: audit dependencies
+      run: |
+        cargo install --locked cargo-audit || true
+        cargo audit
+
+    - name: check vulnerabilities
+      run: |
+        cargo install --locked cargo-pants || true
+        cargo pants
+
+  deps:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install latest nightly
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+
+    - name: update rust
+      run: |
+        rustup update nightly
+        cargo --version
+
+    - name: setup cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: check outdated dependencies
+      run: |
+        cargo install --locked cargo-outdated || true
+        cargo outdated --exit-code 1
+
+    - name: check unused dependencies
+      run: |
+        cargo install --locked cargo-udeps || true
+        cargo udeps
+
   build:
     runs-on: ${{ matrix.os || 'ubuntu' }}-latest
     continue-on-error: ${{ matrix.rust == 'nightly' }}
@@ -16,7 +131,7 @@ jobs:
           - nightly
           - beta
           - stable
-          - 1.60 # MSRV
+          - 1.60.0 # MSRV
         include:
           - rust: stable
             os: macos

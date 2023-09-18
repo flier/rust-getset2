@@ -10,6 +10,7 @@ repository = "https://github.com/flier/getset2/"
 license = "MIT OR Apache-2.0"
 keywords = ["macro", "getter", "setter"]
 categories = ["development-tools::procedural-macro-helpers"]
+rust-version = "1.60"
 resolver = "2"
 
 [lib]
