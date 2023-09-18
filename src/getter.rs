@@ -43,7 +43,7 @@ struct FieldArgs {
     mutable: Option<NameArgs<Option<LitBool>>>,
     #[struct_meta(name = "opt")]
     option: Option<NameArgs<Option<LitBool>>>,
-    slice: Option<NameArgs<Option<LitStr>>>,
+    slice: Option<NameArgs<Option<LitBool>>>,
     rename: Option<LitStr>,
     prefix: Option<NameValue<LitStr>>,
     suffix: Option<NameValue<LitStr>>,
@@ -139,20 +139,22 @@ impl<'a> ToTokens for Getters<'a> {
 }
 
 trait AsBool {
-    fn as_bool(&self) -> bool;
+    fn as_bool(&self) -> Option<bool>;
 }
 
 impl AsBool for Flag {
-    fn as_bool(&self) -> bool {
-        self.span.is_some()
+    fn as_bool(&self) -> Option<bool> {
+        self.span.map(|_| true)
     }
 }
 
 impl AsBool for Option<NameArgs<Option<LitBool>>> {
-    fn as_bool(&self) -> bool {
-        self.as_ref()
-            .map(|m| m.args.as_ref().map(|b| b.value).unwrap_or(true))
-            .unwrap_or_default()
+    fn as_bool(&self) -> Option<bool> {
+        if let Some(v) = self {
+            v.args.as_ref().map(|v| v.value).or(Some(true))
+        } else {
+            None
+        }
     }
 }
 
@@ -166,19 +168,19 @@ struct Getter<'a> {
 
 impl<'a> Getter<'a> {
     fn as_copyable(&'a self) -> Option<CopyGetter<'a>> {
-        if self.field_args.copy.as_bool() || self.struct_args.copy.as_bool() {
-            Some(CopyGetter(self))
-        } else {
-            None
-        }
+        self.field_args
+            .copy
+            .as_bool()
+            .or(self.struct_args.copy.as_bool())
+            .and_then(|b| if b { Some(CopyGetter(self)) } else { None })
     }
 
     fn as_cloneable(&'a self) -> Option<CloneGetter<'a>> {
-        if self.field_args.clone.as_bool() || self.struct_args.clone.as_bool() {
-            Some(CloneGetter(self))
-        } else {
-            None
-        }
+        self.field_args
+            .clone
+            .as_bool()
+            .or(self.struct_args.clone.as_bool())
+            .and_then(|b| if b { Some(CloneGetter(self)) } else { None })
     }
 
     fn as_option(&'a self) -> Option<OptionGetter<'a>> {
@@ -198,11 +200,11 @@ impl<'a> Getter<'a> {
     }
 
     fn as_mutable(&'a self) -> Option<MutGetter<'a>> {
-        if self.field_args.mutable.as_bool() || self.struct_args.mutable.as_bool() {
-            Some(MutGetter(self))
-        } else {
-            None
-        }
+        self.field_args
+            .mutable
+            .as_bool()
+            .or(self.struct_args.mutable.as_bool())
+            .and_then(|b| if b { Some(MutGetter(self)) } else { None })
     }
 
     fn vis(&self) -> Visibility {
@@ -278,12 +280,18 @@ impl<'a> Getter<'a> {
     }
 
     fn is_option(&self) -> bool {
-        if self.field_args.option.as_bool() || self.struct_args.option.as_bool() {
+        if self
+            .field_args
+            .option
+            .as_bool()
+            .or(self.struct_args.option.as_bool())
+            .unwrap_or_default()
+        {
             if extract::option_inner_ty(&self.field.ty).is_some() {
                 return true;
             }
 
-            if self.field_args.option.as_bool() {
+            if self.field_args.option.as_bool().unwrap_or_default() {
                 abort!(
                     self.field.ty.span(),
                     "#[get(opt)] should be applied to an Option type"
@@ -304,7 +312,13 @@ impl<'a> Getter<'a> {
     }
 
     fn is_slice(&self) -> bool {
-        if self.field_args.slice.is_some() || self.struct_args.slice.as_bool() {
+        if self
+            .field_args
+            .slice
+            .as_bool()
+            .or(self.struct_args.slice.as_bool())
+            .unwrap_or_default()
+        {
             if extract::slice_inner_ty(&self.field.ty).is_some() {
                 return true;
             }
