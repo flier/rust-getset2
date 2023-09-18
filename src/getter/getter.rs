@@ -47,7 +47,7 @@ impl<'a> Getter<'a> {
             }
         }
 
-        return self.field.vis.clone();
+        self.field.vis.clone()
     }
 
     pub fn constness(&self) -> Option<Token![const]> {

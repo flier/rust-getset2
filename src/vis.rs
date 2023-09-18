@@ -1,3 +1,5 @@
+#![allow(clippy::enum_variant_names)]
+
 use syn::{
     parse::{Parse, ParseStream},
     parse_quote_spanned,

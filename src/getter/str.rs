@@ -19,8 +19,7 @@ impl<'a> StrGetter<'a> {
             .field_args
             .str
             .clone()
-            .map(|arg| arg.args)
-            .flatten()
+            .and_then(|arg| arg.args)
             .unwrap_or_else(|| {
                 parse_quote! {
                     ::std::string::String::as_str

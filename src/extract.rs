@@ -60,7 +60,7 @@ fn inner_ty(ty: &Type, name: &str) -> Option<Type> {
                     if args.len() == 1 =>
                 {
                     match args.first() {
-                        Some(GenericArgument::Type(ty)) => return Some(ty.clone()),
+                        Some(GenericArgument::Type(ty)) => Some(ty.clone()),
                         _ => None,
                     }
                 }
