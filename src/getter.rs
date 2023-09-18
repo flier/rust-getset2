@@ -25,6 +25,8 @@ struct StructArgs {
     #[struct_meta(name = "opt")]
     #[merge(strategy = merge_flag)]
     option: Flag,
+    #[merge(strategy = merge_flag)]
+    slice: Flag,
     prefix: Option<NameValue<Option<LitStr>>>,
     suffix: Option<NameValue<LitStr>>,
 }
@@ -269,16 +271,18 @@ impl<'a> Getter<'a> {
     fn is_option(&self) -> bool {
         if self.field_args.option.as_bool() || self.struct_args.option.as_bool() {
             if extract::option_inner_ty(&self.field.ty).is_some() {
-                true
-            } else {
+                return true;
+            }
+
+            if self.field_args.option.as_bool() {
                 abort!(
                     self.field.ty.span(),
-                    "field with #[get(opt)] should be an Option type"
+                    "#[get(opt)] should be applied to an Option type"
                 );
             }
-        } else {
-            false
         }
+
+        false
     }
 
     fn option_inner_ty(&self) -> Type {
@@ -291,18 +295,20 @@ impl<'a> Getter<'a> {
     }
 
     fn is_slice(&self) -> bool {
-        if self.field_args.slice.is_some() {
+        if self.field_args.slice.is_some() || self.struct_args.slice.as_bool() {
             if extract::slice_inner_ty(&self.field.ty).is_some() {
-                true
-            } else {
+                return true;
+            }
+
+            if self.field_args.slice.is_some() {
                 abort!(
                     self.field.ty.span(),
-                    "field with #[get(slice)] should be a Vec<T> or an array [T; N] type"
+                    "#[get(slice)] should be applied to a Vec<T> or an array [T; N] type"
                 );
             }
-        } else {
-            false
         }
+
+        false
     }
 
     fn slice_inner_ty(&self) -> Type {

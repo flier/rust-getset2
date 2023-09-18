@@ -1,4 +1,4 @@
-error: field with #[get(slice)] should be a Vec<T> or an array [T; N] type
+error: #[get(slice)] should be applied to a Vec<T> or an array [T; N] type
  --> tests/compile_error/get_slice.rs:6:12
   |
 6 |     field: usize,
