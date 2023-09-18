@@ -5,6 +5,7 @@ use syn::{parse_macro_input, DeriveInput};
 mod extract;
 mod getter;
 mod setter;
+mod vis;
 
 #[proc_macro_derive(Getter, attributes(get))]
 #[proc_macro_error]
