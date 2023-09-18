@@ -2,7 +2,7 @@ use merge::Merge;
 use proc_macro_error::abort;
 use syn::{
     parse::Parse, spanned::Spanned, AngleBracketedGenericArguments, AttrStyle, Attribute,
-    GenericArgument, PathArguments, Type, TypeArray, TypePath,
+    GenericArgument, PathArguments, Type, TypeArray, TypePath, TypeReference,
 };
 
 pub fn args<'a, I, T>(attrs: I, name: &str) -> (T, Vec<&'a Attribute>)
@@ -92,7 +92,22 @@ pub fn slice_inner_ty(ty: &Type) -> Option<Type> {
     }
 }
 
+pub fn is_string_ty(ty: &Type) -> bool {
+    is_ty(ty, "String")
+}
+
 pub fn is_str_ty(ty: &Type) -> bool {
+    is_ref_ty(ty, "str")
+}
+pub fn is_cstring_ty(ty: &Type) -> bool {
+    is_ty(ty, "CString")
+}
+
+pub fn is_cstr_ty(ty: &Type) -> bool {
+    is_ref_ty(ty, "CStr")
+}
+
+pub fn is_ty(ty: &Type, name: &str) -> bool {
     matches!(ty,
         Type::Path(TypePath {
             ref qself,
@@ -101,6 +116,11 @@ pub fn is_str_ty(ty: &Type) -> bool {
             && path
                 .segments
                 .last()
-                .map(|s| s.ident == "String")
+                .map(|s| s.ident == name)
                 .unwrap_or_default())
+}
+
+pub fn is_ref_ty(ty: &Type, name: &str) -> bool {
+    matches!(ty,
+        Type::Reference(TypeReference { elem, .. }) if is_ty(elem.as_ref(), name))
 }

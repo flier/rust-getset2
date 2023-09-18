@@ -6,7 +6,7 @@ use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
 use structmeta::{Flag, NameArgs, NameValue, StructMeta};
 use syn::{
     parse_quote_spanned, spanned::Spanned, Attribute, Data, DataStruct, DeriveInput, Field, Fields,
-    FieldsNamed, FieldsUnnamed, Index, LitBool, LitStr, Member, Type, Visibility,
+    FieldsNamed, FieldsUnnamed, Index, LitBool, LitStr, Member, Path, Type, Visibility,
 };
 
 use crate::{extract, vis::Restricted};
@@ -28,6 +28,8 @@ struct StructArgs {
     slice: Flag,
     #[merge(strategy = merge_flag)]
     str: Flag,
+    #[merge(strategy = merge_flag)]
+    bytes: Flag,
     prefix: Option<NameValue<LitStr>>,
     suffix: Option<NameValue<LitStr>>,
 }
@@ -45,6 +47,7 @@ struct FieldArgs {
     opt: Option<NameArgs<Option<LitBool>>>,
     slice: Option<NameArgs<Option<LitBool>>>,
     str: Option<NameArgs<Option<LitBool>>>,
+    bytes: Option<NameArgs<Option<Path>>>,
     rename: Option<LitStr>,
     prefix: Option<NameValue<LitStr>>,
     suffix: Option<NameValue<LitStr>>,
@@ -124,6 +127,8 @@ impl<'a> ToTokens for Getters<'a> {
         } else if let Some(getter) = getter.as_slice() {
             getter.to_tokens(tokens)
         } else if let Some(getter) = getter.as_str() {
+            getter.to_tokens(tokens)
+        } else if let Some(getter) = getter.as_bytes() {
             getter.to_tokens(tokens)
         } else {
             getter.to_tokens(tokens)
@@ -207,6 +212,14 @@ impl<'a> Getter<'a> {
     fn as_str(&'a self) -> Option<StrGetter<'a>> {
         if self.is_str() {
             Some(StrGetter(self))
+        } else {
+            None
+        }
+    }
+
+    fn as_bytes(&'a self) -> Option<BytesGetter<'a>> {
+        if self.is_bytes() {
+            Some(BytesGetter(self))
         } else {
             None
         }
@@ -355,7 +368,7 @@ impl<'a> Getter<'a> {
             .or(self.struct_args.str.as_bool())
             .unwrap_or_default()
         {
-            if extract::is_str_ty(&self.field.ty) {
+            if extract::is_string_ty(&self.field.ty) {
                 return true;
             }
 
@@ -368,6 +381,15 @@ impl<'a> Getter<'a> {
         }
 
         false
+    }
+
+    fn is_bytes(&self) -> bool {
+        self.field_args
+            .bytes
+            .as_ref()
+            .map(|_| true)
+            .or(self.struct_args.bytes.as_bool())
+            .unwrap_or_default()
     }
 
     fn slice_inner_ty(&self) -> Type {
@@ -500,6 +522,44 @@ impl<'a> ToTokens for StrGetter<'a> {
             #[inline(always)]
             #vis fn #method_name(&self) -> &str {
                 #field_name.as_str()
+            }
+        })
+    }
+}
+
+#[derive(Clone, Debug, Deref)]
+struct BytesGetter<'a>(&'a Getter<'a>);
+
+impl<'a> ToTokens for BytesGetter<'a> {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let vis = self.vis();
+        let attrs = self.field_attrs;
+        let field_name = self.field_name();
+        let method_name = self.method_name();
+
+        let bytes = self
+            .field_args
+            .bytes
+            .as_ref()
+            .map(|v| {
+                v.args.as_ref().map(|path| {
+                    quote_spanned! { self.field.span() =>
+                        #path(#field_name)
+                    }
+                })
+            })
+            .flatten()
+            .unwrap_or_else(|| {
+                quote_spanned! { self.field.span() =>
+                        #field_name.as_bytes()
+                }
+            });
+
+        tokens.append_all(quote_spanned! { self.field.span() =>
+            #( #attrs )*
+            #[inline(always)]
+            #vis fn #method_name(&self) -> &[u8] {
+                #bytes
             }
         })
     }

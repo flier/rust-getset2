@@ -1,4 +1,8 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::HashMap,
+    ffi::{CStr, CString},
+    path::PathBuf,
+};
 
 use getset2::Getter;
 
@@ -188,7 +192,7 @@ fn test_slice_field() {
 }
 
 #[test]
-fn test_string_field() {
+fn test_get_str() {
     #[derive(Default, Getter)]
     struct Foo {
         #[get(str, mut)]
@@ -202,6 +206,36 @@ fn test_string_field() {
     foo.string_field_mut().make_ascii_uppercase();
 
     assert_eq!(foo.string_field(), "FOO");
+}
+
+#[test]
+fn test_get_bytes() {
+    #[derive(Default, Getter)]
+    struct Foo<'a> {
+        #[get(bytes)]
+        str_field: &'a str,
+
+        #[get(bytes)]
+        string_field: String,
+
+        #[get(bytes(CStr::to_bytes))]
+        cstr_field: &'a CStr,
+
+        #[get(bytes)]
+        cstring_field: CString,
+    }
+
+    let foo = Foo {
+        str_field: "str",
+        string_field: "string".to_owned(),
+        cstr_field: CStr::from_bytes_with_nul(b"cstr\0").unwrap(),
+        cstring_field: CString::new("cstring").unwrap(),
+    };
+
+    assert_eq!(foo.str_field(), b"str");
+    assert_eq!(foo.string_field(), b"string");
+    assert_eq!(foo.cstr_field(), b"cstr");
+    assert_eq!(foo.cstring_field(), b"cstring");
 }
 
 #[derive(Default, Getter)]
