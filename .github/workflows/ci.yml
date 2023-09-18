@@ -11,28 +11,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install latest nightly
-      uses: actions-rs/toolchain@v1
+    - uses: actions-rs/toolchain@v1
       with:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-
-    - name: update rust
-      run: |
-        rustup update nightly
-        cargo --version
-
-    - name: setup cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: check format
       run: |
@@ -50,28 +33,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install latest nightly
-      uses: actions-rs/toolchain@v1
+    - uses: actions-rs/toolchain@v1
       with:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-
-    - name: update rust
-      run: |
-        rustup update nightly
-        cargo --version
-
-    - name: setup cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: audit dependencies
       run: |
@@ -88,28 +54,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install latest nightly
-      uses: actions-rs/toolchain@v1
+    - uses: actions-rs/toolchain@v1
       with:
           toolchain: nightly
           override: true
           components: rustfmt, clippy
-
-    - name: update rust
-      run: |
-        rustup update nightly
-        cargo --version
-
-    - name: setup cache
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: check outdated dependencies
       run: |
@@ -137,7 +86,7 @@ jobs:
           - rust: stable
             name: MacOS
             os: macos
-          - rust: nightly
+          - rust: stable
             name: Windows
             os: windows
     env:
