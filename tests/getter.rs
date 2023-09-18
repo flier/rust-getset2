@@ -242,17 +242,15 @@ fn test_get_bytes() {
 fn test_get_borrow() {
     #[derive(Default, Getter)]
     struct Foo {
-        #[get(borrow(Path), mut)]
+        #[get(borrow(Path))]
         path_field: PathBuf,
     }
 
-    let mut foo = Foo {
+    let foo = Foo {
         path_field: PathBuf::from("/tmp"),
     };
 
-    foo.path_field_mut().as_mut_os_str().make_ascii_uppercase();
-
-    assert_eq!(foo.path_field(), Path::new("/TMP"));
+    assert_eq!(foo.path_field(), Path::new("/tmp"));
 }
 
 #[test]

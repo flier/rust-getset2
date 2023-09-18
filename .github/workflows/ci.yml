@@ -122,6 +122,7 @@ jobs:
         cargo udeps
 
   build:
+    name: ${{ matrix.name || format('Rust {0}', matrix.rust) }}
     runs-on: ${{ matrix.os || 'ubuntu' }}-latest
     continue-on-error: ${{ matrix.rust == 'nightly' }}
     strategy:
@@ -134,8 +135,10 @@ jobs:
           - 1.60.0 # MSRV
         include:
           - rust: stable
+            name: MacOS
             os: macos
           - rust: nightly
+            name: Windows
             os: windows
     env:
       RUST_BACKTRACE: full
@@ -147,8 +150,8 @@ jobs:
       id: install-rust
       uses: actions-rs/toolchain@v1
       with:
-          toolchain: ${{ matrix.rust }}
-          override: true
+        toolchain: ${{ matrix.rust }}
+        override: true
 
     - name: setup cache
       uses: actions/cache@v3
