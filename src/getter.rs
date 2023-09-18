@@ -6,7 +6,7 @@ use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
 use structmeta::{Flag, NameArgs, NameValue, StructMeta};
 use syn::{
     parse::{Parse, ParseStream},
-    parse_quote, parse_quote_spanned,
+    parse_quote_spanned,
     spanned::Spanned,
     Attribute, Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, LitBool, LitStr, Path,
     Token, Type, Visibility,
@@ -18,7 +18,6 @@ use crate::extract;
 struct StructArgs {
     #[struct_meta(name = "pub")]
     public: Option<NameArgs<Option<Restricted>>>,
-    vis: Option<Visibility>,
     #[merge(strategy = merge_flag)]
     clone: Flag,
     #[merge(strategy = merge_flag)]
@@ -93,7 +92,6 @@ impl Parse for Restricted {
 struct FieldArgs {
     #[struct_meta(name = "pub")]
     public: Option<NameArgs<Option<Restricted>>>,
-    vis: Option<Visibility>,
     #[merge(strategy = merge::bool::overwrite_false)]
     skip: bool,
     clone: Option<NameArgs<Option<LitBool>>>,
@@ -263,27 +261,19 @@ impl<'a> Getter<'a> {
     }
 
     fn vis(&self) -> Visibility {
-        if let Some(vis) = self.field_args.vis.as_ref() {
-            return vis.clone();
-        }
-
         if let Some(arg) = self.field_args.public.as_ref() {
             if let Some(ref r) = arg.args {
                 return r.clone().into();
             } else {
-                return parse_quote! { pub };
+                return parse_quote_spanned! { self.field.span() => pub };
             }
-        }
-
-        if let Some(vis) = self.struct_args.vis.as_ref() {
-            return vis.clone();
         }
 
         if let Some(arg) = self.struct_args.public.as_ref() {
             if let Some(ref r) = arg.args {
                 return r.clone().into();
             } else {
-                return parse_quote! { pub };
+                return parse_quote_spanned! { self.field.span() => pub };
             }
         }
 
