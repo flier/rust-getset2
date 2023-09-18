@@ -1,4 +1,4 @@
-error: #[derive(Getter)] can only be applied to structure with named fields
+error: #[derive(Getter)] can only be applied to structure
  --> tests/compile_error/enum.rs:4:1
   |
 4 | / pub enum Enum {

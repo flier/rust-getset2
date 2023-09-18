@@ -1,5 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
+use getset2::Getter;
+
 mod foo {
     use std::{collections::HashMap, path::PathBuf};
 
@@ -183,4 +185,16 @@ fn test_slice_field() {
 
     assert_eq!(bar.vec_field(), &[1, 2, 3]);
     assert_eq!(bar.array_field(), &[120, 86, 52, 18]);
+}
+
+#[derive(Default, Getter)]
+#[get(pub, copy)]
+pub struct Unnamed(#[get(rename = "x")] usize, usize);
+
+#[test]
+fn test_unnamed_struct() {
+    let unnamed = Unnamed(123, 456);
+
+    assert_eq!(unnamed.x(), 123);
+    assert_eq!(unnamed.arg1(), 456);
 }

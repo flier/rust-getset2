@@ -8,8 +8,8 @@ use syn::{
     parse::{Parse, ParseStream},
     parse_quote_spanned,
     spanned::Spanned,
-    Attribute, Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, LitBool, LitStr, Path,
-    Token, Type, Visibility,
+    Attribute, Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, FieldsUnnamed, Index,
+    LitBool, LitStr, Member, Path, Token, Type, Visibility,
 };
 
 use crate::extract;
@@ -30,7 +30,7 @@ struct StructArgs {
     option: Flag,
     #[merge(strategy = merge_flag)]
     slice: Flag,
-    prefix: Option<NameValue<Option<LitStr>>>,
+    prefix: Option<NameValue<LitStr>>,
     suffix: Option<NameValue<LitStr>>,
 }
 
@@ -102,7 +102,7 @@ struct FieldArgs {
     option: Option<NameArgs<Option<LitBool>>>,
     slice: Option<NameArgs<Option<LitStr>>>,
     rename: Option<LitStr>,
-    prefix: Option<NameValue<Option<LitStr>>>,
+    prefix: Option<NameValue<LitStr>>,
     suffix: Option<NameValue<LitStr>>,
 }
 
@@ -115,24 +115,30 @@ fn merge_flag(lhs: &mut Flag, rhs: Flag) {
 pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
     let (struct_args, _): (StructArgs, _) = extract::args(&input.attrs, "get");
 
-    if let Data::Struct(DataStruct {
-        fields: Fields::Named(FieldsNamed { named, .. }),
-        ..
-    }) = &input.data
-    {
+    if let Data::Struct(DataStruct { fields, .. }) = &input.data {
         let name = &input.ident;
         let generics = &input.generics;
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-        let getters = named.into_iter().map(|field| {
-            let gen = Getters {
+
+        let fields = match fields {
+            Fields::Named(FieldsNamed { named, .. }) => named,
+            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => unnamed,
+            Fields::Unit => {
+                abort!(
+                    input,
+                    "#[derive(Getter)] can only be applied to structure with fields"
+                )
+            }
+        };
+
+        let getters = fields
+            .into_iter()
+            .enumerate()
+            .map(|(field_idx, field)| Getters {
                 struct_args: &struct_args,
                 field,
-            };
-
-            quote_spanned! { field.span() =>
-                #gen
-            }
-        });
+                field_idx,
+            });
 
         Ok(quote_spanned! { input.span() =>
             impl #impl_generics #name #ty_generics #where_clause {
@@ -140,16 +146,15 @@ pub fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
             }
         })
     } else {
-        abort!(
-            input,
-            "#[derive(Getter)] can only be applied to structure with named fields"
-        )
+        abort!(input, "#[derive(Getter)] can only be applied to structure")
     }
 }
 
+#[derive(Clone, Debug)]
 struct Getters<'a> {
     struct_args: &'a StructArgs,
     field: &'a Field,
+    field_idx: usize,
 }
 
 impl<'a> ToTokens for Getters<'a> {
@@ -161,10 +166,9 @@ impl<'a> ToTokens for Getters<'a> {
         }
 
         let getter = Getter {
-            struct_args: self.struct_args,
-            field_args: &field_args,
+            getters: self,
+            field_args,
             field_attrs: field_attrs.as_slice(),
-            field: self.field,
         };
 
         if let Some(getter) = getter.as_copyable() {
@@ -209,17 +213,15 @@ impl AsBool for Option<NameArgs<Option<LitBool>>> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deref)]
 struct Getter<'a> {
-    struct_args: &'a StructArgs,
-    field_args: &'a FieldArgs,
+    #[deref]
+    getters: &'a Getters<'a>,
+    field_args: FieldArgs,
     field_attrs: &'a [&'a Attribute],
-    field: &'a Field,
 }
 
 impl<'a> Getter<'a> {
-    const DEFAULT_FIELD_PREFIX: &'static str = "get_";
-
     fn as_copyable(&'a self) -> Option<CopyGetter<'a>> {
         if self.field_args.copy.as_bool() || self.struct_args.copy.as_bool() {
             Some(CopyGetter(self))
@@ -280,10 +282,17 @@ impl<'a> Getter<'a> {
         return self.field.vis.clone();
     }
 
-    fn field_name(&self) -> &Ident {
+    fn field_name(&self) -> TokenStream2 {
         match self.field.ident {
-            Some(ref name) => name,
-            None => abort!(self.field.span(), "field should have name"),
+            Some(ref name) => quote_spanned! { self.field.span() => self.#name },
+            None => {
+                let idx = Member::Unnamed(Index {
+                    index: self.field_idx as u32,
+                    span: self.field.span(),
+                });
+
+                quote_spanned! { self.field.span() => self.#idx }
+            }
         }
     }
 
@@ -300,13 +309,7 @@ impl<'a> Getter<'a> {
             .prefix
             .as_ref()
             .or(self.struct_args.prefix.as_ref())
-            .map(|s| {
-                s.value
-                    .as_ref()
-                    .map_or(Self::DEFAULT_FIELD_PREFIX.to_string(), |s| {
-                        format!("{}_", s.value())
-                    })
-            })
+            .map(|s| format!("{}_", s.value.value()))
     }
 
     fn suffix(&self) -> Option<String> {
@@ -325,10 +328,10 @@ impl<'a> Getter<'a> {
             }
         });
 
-        match rename.or_else(|| self.field.ident.clone()) {
-            Some(name) => name,
-            None => abort!(self.field.span(), "field should have name"),
-        }
+        rename.unwrap_or_else(|| match self.field.ident {
+            Some(ref name) => name.clone(),
+            None => format_ident!("arg{}", self.field_idx),
+        })
     }
 
     fn is_option(&self) -> bool {
@@ -399,7 +402,7 @@ impl<'a> ToTokens for Getter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&self) -> &#ty {
-                &self.#field_name
+                & #field_name
             }
         })
     }
@@ -420,7 +423,7 @@ impl<'a> ToTokens for CopyGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&self) -> #ty {
-                self.#field_name
+                #field_name
             }
         })
     }
@@ -441,7 +444,7 @@ impl<'a> ToTokens for CloneGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&self) -> #ty {
-                self.#field_name.clone()
+                #field_name.clone()
             }
         })
     }
@@ -462,7 +465,7 @@ impl<'a> ToTokens for OptionGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&self) -> Option<& #inner_ty> {
-                self.#field_name.as_ref()
+                #field_name.as_ref()
             }
         })
     }
@@ -483,7 +486,7 @@ impl<'a> ToTokens for SliceGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&self) -> &[ #inner_ty ] {
-                self.#field_name.as_slice()
+                #field_name.as_slice()
             }
         })
     }
@@ -529,7 +532,7 @@ impl<'a> ToTokens for MutGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut #ty {
-                &mut self.#field_name
+                &mut #field_name
             }
         })
     }
@@ -543,17 +546,14 @@ impl<'a> ToTokens for MutOptionGetter<'a> {
         let vis = self.vis();
         let attrs = self.field_attrs;
         let inner_ty = self.option_inner_ty();
-        let field_name = match self.field.ident {
-            Some(ref name) => name,
-            None => abort!(self.field.span(), "field should have name"),
-        };
+        let field_name = self.field_name();
         let method_name = self.method_name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> Option<&mut #inner_ty> {
-                self.#field_name.as_mut()
+                #field_name.as_mut()
             }
         })
     }
@@ -574,7 +574,7 @@ impl<'a> ToTokens for MutSliceGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut[ #inner_ty ] {
-                self.#field_name.as_mut_slice()
+                #field_name.as_mut_slice()
             }
         })
     }
