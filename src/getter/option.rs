@@ -15,14 +15,15 @@ impl<'a> ToTokens for OptionGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
         let attrs = self.field_attrs;
+        let constness = self.constness();
+        let method_name = self.method_name();
         let inner_ty = self.option_inner_ty();
         let field_name = self.field_name();
-        let method_name = self.method_name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
-            #vis fn #method_name(&self) -> Option<& #inner_ty> {
+            #vis #constness fn #method_name(&self) -> Option<& #inner_ty> {
                 #field_name.as_ref()
             }
         })
@@ -36,9 +37,9 @@ impl<'a> ToTokens for MutOptionGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
         let attrs = self.field_attrs;
+        let method_name = self.method_name();
         let inner_ty = self.option_inner_ty();
         let field_name = self.field_name();
-        let method_name = self.method_name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*

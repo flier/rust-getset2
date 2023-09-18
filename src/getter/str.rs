@@ -33,13 +33,14 @@ impl<'a> ToTokens for StrGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
         let attrs = self.field_attrs;
+        let constness = self.constness();
         let method_name = self.method_name();
         let as_str = self.as_str();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
-            #vis fn #method_name(&self) -> &str {
+            #vis #constness fn #method_name(&self) -> &str {
                 #as_str
             }
         })
@@ -53,8 +54,8 @@ impl<'a> ToTokens for MutStrGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
         let attrs = self.field_attrs;
-        let field_name = self.field_name();
         let method_name = self.method_name();
+        let field_name = self.field_name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*

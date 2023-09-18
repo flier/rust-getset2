@@ -2,9 +2,12 @@ use derive_more::Deref;
 use proc_macro2::TokenStream;
 use proc_macro_error::abort;
 use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
-use syn::{parse_quote_spanned, spanned::Spanned, Attribute, Ident, Index, Member, Visibility};
+use syn::{
+    parse_quote, parse_quote_spanned, spanned::Spanned, Attribute, Ident, Index, Member, Token,
+    Visibility,
+};
 
-use super::{FieldArgs, Getters};
+use super::{AsBool, FieldArgs, Getters};
 
 #[derive(Clone, Debug, Deref)]
 pub struct Getter<'a> {
@@ -45,6 +48,20 @@ impl<'a> Getter<'a> {
         }
 
         return self.field.vis.clone();
+    }
+
+    pub fn constness(&self) -> Option<Token![const]> {
+        if self
+            .field_args
+            .constness
+            .as_bool()
+            .or(self.struct_args.constness.as_bool())
+            .unwrap_or_default()
+        {
+            Some(parse_quote! { const })
+        } else {
+            None
+        }
     }
 
     pub fn field_name(&self) -> TokenStream {
@@ -110,12 +127,13 @@ impl<'a> ToTokens for Getter<'a> {
         let attrs = self.field_attrs;
         let ty = &self.field.ty;
         let field_name = self.field_name();
+        let constness = self.constness();
         let method_name = self.method_name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
-            #vis fn #method_name(&self) -> &#ty {
+            #vis #constness fn #method_name(&self) -> &#ty {
                 & #field_name
             }
         })

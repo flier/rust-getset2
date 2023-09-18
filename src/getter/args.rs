@@ -8,6 +8,9 @@ use crate::vis::Restricted;
 pub struct StructArgs {
     #[struct_meta(name = "pub")]
     pub public: Option<NameArgs<Option<Restricted>>>,
+    #[struct_meta(name = "const")]
+    #[merge(strategy = merge_flag)]
+    pub constness: Flag,
     #[merge(strategy = merge_flag)]
     pub clone: Flag,
     #[merge(strategy = merge_flag)]
@@ -33,6 +36,8 @@ pub struct FieldArgs {
     pub public: Option<NameArgs<Option<Restricted>>>,
     #[merge(strategy = merge::bool::overwrite_false)]
     pub skip: bool,
+    #[struct_meta(name = "const")]
+    pub constness: Option<NameArgs<Option<LitBool>>>,
     pub clone: Option<NameArgs<Option<LitBool>>>,
     pub copy: Option<NameArgs<Option<LitBool>>>,
     #[struct_meta(name = "mut")]

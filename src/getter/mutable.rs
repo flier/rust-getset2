@@ -22,9 +22,9 @@ impl<'a> ToTokens for MutGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
         let attrs = self.field_attrs;
+        let method_name = self.method_name();
         let ty = &self.field.ty;
         let field_name = self.field_name();
-        let method_name = self.method_name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*

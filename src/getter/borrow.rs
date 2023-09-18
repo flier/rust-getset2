@@ -13,6 +13,7 @@ impl<'a> ToTokens for BorrowGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
         let attrs = self.field_attrs;
+        let constness = self.constness();
         let method_name = self.method_name();
         let field_name = self.field_name();
         let borrowed_ty = self.borrowed_ty();
@@ -20,7 +21,7 @@ impl<'a> ToTokens for BorrowGetter<'a> {
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
-            #vis fn #method_name(&self) -> & #borrowed_ty {
+            #vis #constness fn #method_name(&self) -> & #borrowed_ty {
                 ::std::borrow::Borrow::borrow(& #field_name)
             }
         })

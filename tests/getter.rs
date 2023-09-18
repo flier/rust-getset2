@@ -255,12 +255,38 @@ fn test_get_borrow() {
     assert_eq!(foo.path_field(), Path::new("/TMP"));
 }
 
-#[derive(Default, Getter)]
-#[get(pub, copy)]
-pub struct Unnamed(#[get(rename = "x")] usize, usize);
+#[test]
+fn test_const_getter() {
+    #[derive(Default, Getter)]
+    #[get(pub, const, mut)]
+    struct Foo {
+        private_field: usize,
+
+        #[get(copy)]
+        copy_field: usize,
+
+        #[get(clone, const(false))]
+        clone_field: usize,
+    }
+
+    let mut foo = Foo::default();
+
+    *foo.private_field_mut() = 123;
+    assert_eq!(foo.private_field(), &123);
+
+    *foo.copy_field_mut() = 456;
+    assert_eq!(foo.copy_field(), 456);
+
+    *foo.clone_field_mut() = 789;
+    assert_eq!(foo.clone_field(), 789);
+}
 
 #[test]
 fn test_unnamed_struct() {
+    #[derive(Default, Getter)]
+    #[get(pub, copy)]
+    pub struct Unnamed(#[get(rename = "x")] usize, usize);
+
     let unnamed = Unnamed(123, 456);
 
     assert_eq!(unnamed.x(), 123);
