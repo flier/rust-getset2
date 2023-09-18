@@ -21,7 +21,7 @@ impl<'a> ToTokens for CloneGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis #constness fn #method_name(&self) -> #ty {
-                #field_name.clone()
+                ::std::clone::Clone::clone(& #field_name)
             }
         })
     }

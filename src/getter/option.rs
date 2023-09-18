@@ -24,7 +24,7 @@ impl<'a> ToTokens for OptionGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis #constness fn #method_name(&self) -> Option<& #inner_ty> {
-                #field_name.as_ref()
+                ::std::option::Option::as_ref(& #field_name)
             }
         })
     }
@@ -45,7 +45,7 @@ impl<'a> ToTokens for MutOptionGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> Option<&mut #inner_ty> {
-                #field_name.as_mut()
+                ::std::option::Option::as_mut(&mut #field_name)
             }
         })
     }

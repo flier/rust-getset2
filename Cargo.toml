@@ -24,5 +24,7 @@ quote = "1"
 structmeta = "0.2"
 syn = { version = "2", features = ["extra-traits"] }
 
+
 [dev-dependencies]
+doc-comment = "0.3"
 trybuild = "1"

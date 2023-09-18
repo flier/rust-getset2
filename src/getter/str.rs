@@ -2,7 +2,7 @@ use derive_more::{Deref, From};
 use proc_macro2::TokenStream;
 use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
-use syn::spanned::Spanned;
+use syn::{parse_quote, spanned::Spanned};
 
 use crate::ty::TypeExt;
 
@@ -15,16 +15,20 @@ impl<'a> StrGetter<'a> {
     fn as_str(&self) -> TokenStream {
         let field_name = self.field_name();
 
-        if let Some(ref arg) = self.field_args.str {
-            if let Some(ref path) = arg.args {
-                return quote_spanned! { self.field.span() =>
-                    #path(#field_name)
-                };
-            }
-        }
+        let path = self
+            .field_args
+            .str
+            .clone()
+            .map(|arg| arg.args)
+            .flatten()
+            .unwrap_or_else(|| {
+                parse_quote! {
+                    ::std::string::String::as_str
+                }
+            });
 
         quote_spanned! { self.field.span() =>
-            #field_name.as_str()
+            #path (& #field_name)
         }
     }
 }
@@ -61,7 +65,7 @@ impl<'a> ToTokens for MutStrGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut str {
-                #field_name.as_mut_str()
+                ::std::string::String::as_mut_str(&mut #field_name)
             }
         })
     }
