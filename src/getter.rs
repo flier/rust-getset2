@@ -45,8 +45,8 @@ struct FieldArgs {
     #[struct_meta(name = "mut")]
     mutable: Option<NameArgs<Option<LitBool>>>,
     opt: Option<NameArgs<Option<LitBool>>>,
-    slice: Option<NameArgs<Option<LitBool>>>,
-    str: Option<NameArgs<Option<LitBool>>>,
+    slice: Option<NameArgs<Option<Path>>>,
+    str: Option<NameArgs<Option<Path>>>,
     bytes: Option<NameArgs<Option<Path>>>,
     rename: Option<LitStr>,
     prefix: Option<NameValue<LitStr>>,
@@ -118,29 +118,29 @@ impl<'a> ToTokens for Getters<'a> {
             field_attrs: field_attrs.as_slice(),
         };
 
-        if let Some(getter) = getter.as_copyable() {
-            getter.to_tokens(tokens)
-        } else if let Some(getter) = getter.as_cloneable() {
-            getter.to_tokens(tokens)
-        } else if let Some(getter) = getter.as_option() {
-            getter.to_tokens(tokens)
-        } else if let Some(getter) = getter.as_slice() {
-            getter.to_tokens(tokens)
-        } else if let Some(getter) = getter.as_str() {
-            getter.to_tokens(tokens)
-        } else if let Some(getter) = getter.as_bytes() {
-            getter.to_tokens(tokens)
+        if getter.is_copyable() {
+            CopyGetter(&getter).to_tokens(tokens)
+        } else if getter.is_cloneable() {
+            CloneGetter(&getter).to_tokens(tokens)
+        } else if getter.is_option() {
+            OptionGetter(&getter).to_tokens(tokens)
+        } else if getter.is_slice() {
+            SliceGetter(&getter).to_tokens(tokens)
+        } else if getter.is_str() {
+            StrGetter(&getter).to_tokens(tokens)
+        } else if getter.is_bytes() {
+            BytesGetter(&getter).to_tokens(tokens)
         } else {
             getter.to_tokens(tokens)
         };
 
         if let Some(getter) = getter.as_mutable() {
-            if let Some(getter) = getter.as_mut_option() {
-                getter.to_tokens(tokens)
-            } else if let Some(getter) = getter.as_mut_slice() {
-                getter.to_tokens(tokens)
-            } else if let Some(getter) = getter.as_mut_str() {
-                getter.to_tokens(tokens)
+            if getter.is_option() {
+                MutOptionGetter(&getter).to_tokens(tokens)
+            } else if getter.is_slice() {
+                MutSliceGetter(&getter).to_tokens(tokens)
+            } else if getter.is_str() {
+                MutStrGetter(&getter).to_tokens(tokens)
             } else {
                 getter.to_tokens(tokens)
             }
@@ -168,6 +168,12 @@ impl AsBool for Option<NameArgs<Option<LitBool>>> {
     }
 }
 
+impl AsBool for Option<NameArgs<Option<Path>>> {
+    fn as_bool(&self) -> Option<bool> {
+        self.as_ref().map(|_| true)
+    }
+}
+
 #[derive(Clone, Debug, Deref)]
 struct Getter<'a> {
     #[deref]
@@ -177,52 +183,20 @@ struct Getter<'a> {
 }
 
 impl<'a> Getter<'a> {
-    fn as_copyable(&'a self) -> Option<CopyGetter<'a>> {
+    fn is_copyable(&'a self) -> bool {
         self.field_args
             .copy
             .as_bool()
             .or(self.struct_args.copy.as_bool())
-            .and_then(|b| if b { Some(CopyGetter(self)) } else { None })
+            .unwrap_or_default()
     }
 
-    fn as_cloneable(&'a self) -> Option<CloneGetter<'a>> {
+    fn is_cloneable(&'a self) -> bool {
         self.field_args
             .clone
             .as_bool()
             .or(self.struct_args.clone.as_bool())
-            .and_then(|b| if b { Some(CloneGetter(self)) } else { None })
-    }
-
-    fn as_option(&'a self) -> Option<OptionGetter<'a>> {
-        if self.is_option() {
-            Some(OptionGetter(self))
-        } else {
-            None
-        }
-    }
-
-    fn as_slice(&'a self) -> Option<SliceGetter<'a>> {
-        if self.is_slice() {
-            Some(SliceGetter(self))
-        } else {
-            None
-        }
-    }
-
-    fn as_str(&'a self) -> Option<StrGetter<'a>> {
-        if self.is_str() {
-            Some(StrGetter(self))
-        } else {
-            None
-        }
-    }
-
-    fn as_bytes(&'a self) -> Option<BytesGetter<'a>> {
-        if self.is_bytes() {
-            Some(BytesGetter(self))
-        } else {
-            None
-        }
+            .unwrap_or_default()
     }
 
     fn as_mutable(&'a self) -> Option<MutGetter<'a>> {
@@ -360,6 +334,22 @@ impl<'a> Getter<'a> {
         false
     }
 
+    fn as_slice(&self) -> TokenStream2 {
+        let field_name = self.field_name();
+
+        if let Some(ref arg) = self.field_args.slice {
+            if let Some(ref path) = arg.args {
+                return quote_spanned! { self.field.span() =>
+                    #path(#field_name)
+                };
+            }
+        }
+
+        quote_spanned! { self.field.span() =>
+            #field_name.as_slice()
+        }
+    }
+
     fn is_str(&self) -> bool {
         if self
             .field_args
@@ -383,13 +373,44 @@ impl<'a> Getter<'a> {
         false
     }
 
+    fn as_str(&self) -> TokenStream2 {
+        let field_name = self.field_name();
+
+        if let Some(ref arg) = self.field_args.str {
+            if let Some(ref path) = arg.args {
+                return quote_spanned! { self.field.span() =>
+                    #path(#field_name)
+                };
+            }
+        }
+
+        quote_spanned! { self.field.span() =>
+            #field_name.as_str()
+        }
+    }
+
     fn is_bytes(&self) -> bool {
         self.field_args
             .bytes
-            .as_ref()
-            .map(|_| true)
+            .as_bool()
             .or(self.struct_args.bytes.as_bool())
             .unwrap_or_default()
+    }
+
+    fn as_bytes(&self) -> TokenStream2 {
+        let field_name = self.field_name();
+
+        if let Some(ref arg) = self.field_args.bytes {
+            if let Some(ref path) = arg.args {
+                return quote_spanned! { self.field.span() =>
+                    #path(#field_name)
+                };
+            }
+        }
+
+        quote_spanned! { self.field.span() =>
+            #field_name.as_bytes()
+        }
     }
 
     fn slice_inner_ty(&self) -> Type {
@@ -494,14 +515,14 @@ impl<'a> ToTokens for SliceGetter<'a> {
         let vis = self.vis();
         let attrs = self.field_attrs;
         let inner_ty = self.slice_inner_ty();
-        let field_name = self.field_name();
         let method_name = self.method_name();
+        let as_slice = self.as_slice();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&self) -> &[ #inner_ty ] {
-                #field_name.as_slice()
+                #as_slice
             }
         })
     }
@@ -514,14 +535,14 @@ impl<'a> ToTokens for StrGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let vis = self.vis();
         let attrs = self.field_attrs;
-        let field_name = self.field_name();
         let method_name = self.method_name();
+        let as_str = self.as_str();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&self) -> &str {
-                #field_name.as_str()
+                #as_str
             }
         })
     }
@@ -534,32 +555,14 @@ impl<'a> ToTokens for BytesGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
         let vis = self.vis();
         let attrs = self.field_attrs;
-        let field_name = self.field_name();
         let method_name = self.method_name();
-
-        let bytes = self
-            .field_args
-            .bytes
-            .as_ref()
-            .map(|v| {
-                v.args.as_ref().map(|path| {
-                    quote_spanned! { self.field.span() =>
-                        #path(#field_name)
-                    }
-                })
-            })
-            .flatten()
-            .unwrap_or_else(|| {
-                quote_spanned! { self.field.span() =>
-                        #field_name.as_bytes()
-                }
-            });
+        let as_bytes = self.as_bytes();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&self) -> &[u8] {
-                #bytes
+                #as_bytes
             }
         })
     }
@@ -569,30 +572,6 @@ impl<'a> ToTokens for BytesGetter<'a> {
 struct MutGetter<'a>(&'a Getter<'a>);
 
 impl<'a> MutGetter<'a> {
-    fn as_mut_option(&'a self) -> Option<MutOptionGetter<'a>> {
-        if self.is_option() {
-            Some(MutOptionGetter(self))
-        } else {
-            None
-        }
-    }
-
-    fn as_mut_slice(&'a self) -> Option<MutSliceGetter<'a>> {
-        if self.is_slice() {
-            Some(MutSliceGetter(self))
-        } else {
-            None
-        }
-    }
-
-    fn as_mut_str(&'a self) -> Option<MutStrGetter<'a>> {
-        if self.is_str() {
-            Some(MutStrGetter(self))
-        } else {
-            None
-        }
-    }
-
     fn method_name(&self) -> Ident {
         let prefix = self.prefix().unwrap_or_default();
         let name = self.name();

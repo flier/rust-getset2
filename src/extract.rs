@@ -96,17 +96,6 @@ pub fn is_string_ty(ty: &Type) -> bool {
     is_ty(ty, "String")
 }
 
-pub fn is_str_ty(ty: &Type) -> bool {
-    is_ref_ty(ty, "str")
-}
-pub fn is_cstring_ty(ty: &Type) -> bool {
-    is_ty(ty, "CString")
-}
-
-pub fn is_cstr_ty(ty: &Type) -> bool {
-    is_ref_ty(ty, "CStr")
-}
-
 pub fn is_ty(ty: &Type, name: &str) -> bool {
     matches!(ty,
         Type::Path(TypePath {
@@ -118,9 +107,4 @@ pub fn is_ty(ty: &Type, name: &str) -> bool {
                 .last()
                 .map(|s| s.ident == name)
                 .unwrap_or_default())
-}
-
-pub fn is_ref_ty(ty: &Type, name: &str) -> bool {
-    matches!(ty,
-        Type::Reference(TypeReference { elem, .. }) if is_ty(elem.as_ref(), name))
 }
