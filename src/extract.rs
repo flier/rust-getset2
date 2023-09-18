@@ -36,6 +36,14 @@ where
 }
 
 pub fn option_inner_ty(ty: &Type) -> Option<Type> {
+    inner_ty(ty, "Option")
+}
+
+pub fn slice_inner_ty(ty: &Type) -> Option<Type> {
+    inner_ty(ty, "Vec").or(array_elem_ty(ty))
+}
+
+fn inner_ty(ty: &Type, name: &str) -> Option<Type> {
     match ty {
         Type::Path(TypePath {
             ref qself,
@@ -44,7 +52,7 @@ pub fn option_inner_ty(ty: &Type) -> Option<Type> {
             && path
                 .segments
                 .last()
-                .map(|s| s.ident == "Option")
+                .map(|s| s.ident == name)
                 .unwrap_or_default() =>
         {
             match path.segments.last().cloned().unwrap().arguments {
@@ -63,30 +71,8 @@ pub fn option_inner_ty(ty: &Type) -> Option<Type> {
     }
 }
 
-pub fn slice_inner_ty(ty: &Type) -> Option<Type> {
+fn array_elem_ty(ty: &Type) -> Option<Type> {
     match ty {
-        Type::Path(TypePath {
-            ref qself,
-            ref path,
-        }) if qself.is_none()
-            && path
-                .segments
-                .last()
-                .map(|s| s.ident == "Vec")
-                .unwrap_or_default() =>
-        {
-            match path.segments.last().cloned().unwrap().arguments {
-                PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
-                    if args.len() == 1 =>
-                {
-                    match args.first() {
-                        Some(GenericArgument::Type(ty)) => Some(ty.clone()),
-                        _ => None,
-                    }
-                }
-                _ => None,
-            }
-        }
         Type::Array(TypeArray { ref elem, .. }) => Some(elem.as_ref().clone()),
         _ => None,
     }
