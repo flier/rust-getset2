@@ -2,29 +2,32 @@ use derive_more::Constructor;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 
-use crate::{args, field::Field};
+use crate::{args, field::Field as BaseField};
 
 use super::{
     BorrowExt, BorrowGetter, BorrowMutGetter, BytesExt, BytesGetter, CloneGetter, CloneableExt,
-    CopyGetter, CopyableExt, FieldArgs, Getter, MutOptionGetter, MutSliceGetter, MutStrGetter,
-    MutableExt, OptionExt, OptionGetter, SliceExt, SliceGetter, StrExt, StrGetter, StructArgs,
+    CopyGetter, CopyableExt, Field, FieldArgs, Getter, MutOptionGetter, MutSliceGetter,
+    MutStrGetter, MutableExt, OptionExt, OptionGetter, SliceExt, SliceGetter, StrExt, StrGetter,
+    StructArgs,
 };
 
 #[derive(Clone, Debug, Constructor)]
 pub struct Getters<'a> {
     pub struct_args: &'a StructArgs,
-    pub field: Field<'a>,
+    pub field: BaseField<'a>,
 }
 
 impl<'a> ToTokens for Getters<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let (field_args, field_attrs): (FieldArgs, _) = args::extract(&self.field.attrs, "get");
 
-        if field_args.skip {
+        let field = Field::new(&self.field, field_args, &field_attrs);
+
+        if field.args.skip {
             return;
         }
 
-        let getter = Getter::new(self, field_args, field_attrs.as_slice());
+        let getter = Getter::new(self, field);
 
         if getter.is_copyable() {
             CopyGetter::from(&getter).to_tokens(tokens)

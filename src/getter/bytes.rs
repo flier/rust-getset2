@@ -14,7 +14,7 @@ impl<'a> BytesGetter<'a> {
     fn as_bytes(&self) -> TokenStream {
         let field_name = self.field.name();
 
-        if let Some(ref arg) = self.field_args.bytes {
+        if let Some(ref arg) = self.field.args.bytes {
             if let Some(ref path) = arg.args {
                 return quote_spanned! { self.field.span() =>
                     #path( self.#field_name )
@@ -31,7 +31,7 @@ impl<'a> BytesGetter<'a> {
 impl<'a> ToTokens for BytesGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let constness = self.constness();
         let method_name = self.method_name();
         let as_bytes = self.as_bytes();
@@ -52,7 +52,8 @@ pub trait BytesExt {
 
 impl BytesExt for Getter<'_> {
     fn is_bytes(&self) -> bool {
-        self.field_args
+        self.field
+            .args
             .bytes
             .as_bool()
             .or(self.struct_args.bytes.as_bool())

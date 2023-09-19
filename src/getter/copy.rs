@@ -13,7 +13,7 @@ pub struct CopyGetter<'a>(&'a Getter<'a>);
 impl<'a> ToTokens for CopyGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let constness = self.constness();
         let method_name = self.method_name();
         let ty = &self.field.ty;
@@ -35,7 +35,8 @@ pub trait CopyableExt {
 
 impl CopyableExt for Getter<'_> {
     fn is_copyable(&self) -> bool {
-        self.field_args
+        self.field
+            .args
             .copy
             .as_bool()
             .or(self.struct_args.copy.as_bool())

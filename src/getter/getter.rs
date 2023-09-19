@@ -1,54 +1,49 @@
 use derive_more::{Constructor, Deref};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
-use syn::{spanned::Spanned, Attribute, Ident, Token, Visibility};
+use syn::{spanned::Spanned, Ident, Token, Visibility};
 
 use crate::args;
 
-use super::{FieldArgs, Getters};
+use super::{Field, Getters};
 
 #[derive(Clone, Debug, Constructor, Deref)]
 pub struct Getter<'a> {
     #[deref]
     getters: &'a Getters<'a>,
-    pub field_args: FieldArgs,
-    pub field_attrs: &'a [&'a Attribute],
+    pub field: Field<'a>,
 }
 
 impl<'a> Getter<'a> {
     pub fn vis(&self) -> Visibility {
-        args::vis(&self.field_args.vis, &self.struct_args.vis, &self.field.vis)
+        args::vis(&self.field.args.vis, &self.struct_args.vis, &self.field.vis)
     }
 
     pub fn constness(&self) -> Option<Token![const]> {
-        args::constness(&self.field_args.constness, &self.struct_args.constness)
+        args::constness(&self.field.args.constness, &self.struct_args.constness)
     }
 
     pub fn method_name(&self) -> Ident {
         let prefix = self.prefix().unwrap_or_default();
-        let name = self.name();
+        let arg_name = self.field.arg_name();
         let suffix = self.suffix().unwrap_or_default();
 
-        format_ident!("{}{}{}", prefix, name.to_string(), suffix)
+        format_ident!("{}{}{}", prefix, arg_name.to_string(), suffix)
     }
 
     pub fn prefix(&self) -> Option<String> {
-        args::prefix(&self.field_args.prefix, &self.struct_args.prefix)
+        args::prefix(&self.field.args.prefix, &self.struct_args.prefix)
     }
 
     pub fn suffix(&self) -> Option<String> {
-        args::suffix(&self.field_args.suffix, &self.struct_args.suffix)
-    }
-
-    pub fn name(&self) -> Ident {
-        args::name(&self.field_args.rename, &self.field.ident, self.field.idx)
+        args::suffix(&self.field.args.suffix, &self.struct_args.suffix)
     }
 }
 
 impl<'a> ToTokens for Getter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let ty = &self.field.ty;
         let field_name = self.field.name();
         let constness = self.constness();

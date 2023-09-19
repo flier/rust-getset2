@@ -14,7 +14,7 @@ pub struct OptionGetter<'a>(&'a Getter<'a>);
 impl<'a> ToTokens for OptionGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let constness = self.constness();
         let method_name = self.method_name();
         let inner_ty = self.option_inner_ty();
@@ -36,7 +36,7 @@ pub struct MutOptionGetter<'a>(&'a MutGetter<'a>);
 impl<'a> ToTokens for MutOptionGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let method_name = self.method_name();
         let inner_ty = self.option_inner_ty();
         let field_name = self.field.name();
@@ -60,7 +60,8 @@ pub trait OptionExt {
 impl OptionExt for Getter<'_> {
     fn is_option(&self) -> bool {
         if self
-            .field_args
+            .field
+            .args
             .opt
             .as_bool()
             .or(self.struct_args.opt.as_bool())
@@ -70,7 +71,7 @@ impl OptionExt for Getter<'_> {
                 return true;
             }
 
-            if self.field_args.opt.as_bool().unwrap_or_default() {
+            if self.field.args.opt.as_bool().unwrap_or_default() {
                 abort!(
                     self.field.ty.span(),
                     "#[get(opt)] should be applied to an Option type"

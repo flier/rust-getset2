@@ -16,7 +16,8 @@ impl<'a> StrGetter<'a> {
         let field_name = self.field.name();
 
         let path = self
-            .field_args
+            .field
+            .args
             .str
             .clone()
             .and_then(|arg| arg.args)
@@ -35,7 +36,7 @@ impl<'a> StrGetter<'a> {
 impl<'a> ToTokens for StrGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let constness = self.constness();
         let method_name = self.method_name();
         let as_str = self.as_str();
@@ -56,7 +57,7 @@ pub struct MutStrGetter<'a>(&'a MutGetter<'a>);
 impl<'a> ToTokens for MutStrGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let method_name = self.method_name();
         let field_name = self.field.name();
 
@@ -77,7 +78,8 @@ pub trait StrExt {
 impl StrExt for Getter<'_> {
     fn is_str(&self) -> bool {
         if self
-            .field_args
+            .field
+            .args
             .str
             .as_bool()
             .or(self.struct_args.str.as_bool())
@@ -87,7 +89,7 @@ impl StrExt for Getter<'_> {
                 return true;
             }
 
-            if self.field_args.str.is_some() {
+            if self.field.args.str.is_some() {
                 abort!(
                     self.field.ty.span(),
                     "#[get(str)] should be applied to a String type"

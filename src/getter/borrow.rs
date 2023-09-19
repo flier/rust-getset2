@@ -6,7 +6,7 @@ use syn::{spanned::Spanned, Type};
 
 use crate::args::AsBool;
 
-use super::{ Getter, MutGetter};
+use super::{Getter, MutGetter};
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct BorrowGetter<'a>(&'a Getter<'a>);
@@ -14,7 +14,7 @@ pub struct BorrowGetter<'a>(&'a Getter<'a>);
 impl<'a> ToTokens for BorrowGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let constness = self.constness();
         let method_name = self.method_name();
         let field_name = self.field.name();
@@ -36,7 +36,7 @@ pub struct BorrowMutGetter<'a>(&'a MutGetter<'a>);
 impl<'a> ToTokens for BorrowMutGetter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
-        let attrs = self.field_attrs;
+        let attrs = self.field.attrs;
         let method_name = self.method_name();
         let field_name = self.field.name();
         let borrowed_ty = self.borrowed_ty();
@@ -59,11 +59,11 @@ pub trait BorrowExt {
 
 impl BorrowExt for Getter<'_> {
     fn is_borrow(&self) -> bool {
-        self.field_args.borrow.as_bool().unwrap_or_default()
+        self.field.args.borrow.as_bool().unwrap_or_default()
     }
 
     fn borrowed_ty(&self) -> &Type {
-        if let Some(ref arg) = self.field_args.borrow {
+        if let Some(ref arg) = self.field.args.borrow {
             &arg.args
         } else {
             abort!(
