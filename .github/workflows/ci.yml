@@ -54,6 +54,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          cargo_toml:
+            - 'Cargo.toml'
+            - 'Cargo.lock'
+
     - uses: actions-rs/toolchain@v1
       with:
           toolchain: nightly
@@ -61,11 +69,13 @@ jobs:
           components: rustfmt, clippy
 
     - name: check outdated dependencies
+      if: steps.changes.outputs.cargo_toml == 'true'
       run: |
         cargo install --locked cargo-outdated || true
         cargo outdated --exit-code 1
 
     - name: check unused dependencies
+      if: steps.changes.outputs.cargo_toml == 'true'
       run: |
         cargo install --locked cargo-udeps || true
         cargo udeps
