@@ -1,27 +1,23 @@
 use derive_more::{Constructor, Deref};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
-use syn::{spanned::Spanned, Attribute, Ident, Token, Visibility};
+use syn::{spanned::Spanned, Attribute, Ident, Visibility};
 
 use crate::args;
 
-use super::{FieldArgs, Getters};
+use super::{FieldArgs, Setters};
 
 #[derive(Clone, Debug, Constructor, Deref)]
-pub struct Getter<'a> {
+pub struct Setter<'a> {
     #[deref]
-    getters: &'a Getters<'a>,
+    setters: &'a Setters<'a>,
     pub field_args: FieldArgs,
     pub field_attrs: &'a [&'a Attribute],
 }
 
-impl<'a> Getter<'a> {
+impl<'a> Setter<'a> {
     pub fn vis(&self) -> Visibility {
         args::vis(&self.field_args.vis, &self.struct_args.vis, &self.field.vis)
-    }
-
-    pub fn constness(&self) -> Option<Token![const]> {
-        args::constness(&self.field_args.constness, &self.struct_args.constness)
     }
 
     pub fn field_name(&self) -> TokenStream {
@@ -29,7 +25,7 @@ impl<'a> Getter<'a> {
     }
 
     pub fn method_name(&self) -> Ident {
-        let prefix = self.prefix().unwrap_or_default();
+        let prefix = self.prefix().unwrap_or_else(|| "set_".to_string());
         let name = self.name();
         let suffix = self.suffix().unwrap_or_default();
 
@@ -49,20 +45,21 @@ impl<'a> Getter<'a> {
     }
 }
 
-impl<'a> ToTokens for Getter<'a> {
+impl<'a> ToTokens for Setter<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let vis = self.vis();
         let attrs = self.field_attrs;
         let ty = &self.field.ty;
         let field_name = self.field_name();
-        let constness = self.constness();
         let method_name = self.method_name();
+        let arg_name = self.name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
             #[inline(always)]
-            #vis #constness fn #method_name(&self) -> &#ty {
-                & self.#field_name
+            #vis fn #method_name(&mut self, #arg_name: #ty) -> &mut Self {
+                self.#field_name = #arg_name;
+                self
             }
         })
     }

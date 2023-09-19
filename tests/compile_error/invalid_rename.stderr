@@ -1,16 +1,16 @@
-error: invalid field name to rename, expected identifier
- --> tests/compile_error/invalid_rename.rs:5:20
+error: invalid #[get(..)] attribute, expected identifier
+ --> tests/compile_error/invalid_rename.rs:5:5
   |
-5 |     #[get(rename = "?")]
-  |                    ^^^
+5 |     #[get(rename(?))]
+  |     ^
 
-error: invalid #[get(..)] attribute, expected `rename = ...`, found `rename`(...)
+error: invalid #[get(..)] attribute, expected identifier
   --> tests/compile_error/invalid_rename.rs:11:5
    |
 11 |     #[get(rename("test"))]
    |     ^
 
-error: invalid #[get(..)] attribute, expected `rename = ...`, found `rename`
+error: invalid #[get(..)] attribute, expected `rename(...)`, found `rename`
   --> tests/compile_error/invalid_rename.rs:17:5
    |
 17 |     #[get(rename)]

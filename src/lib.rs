@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use proc_macro_error::proc_macro_error;
 use syn::{parse_macro_input, DeriveInput};
 
-mod extract;
+mod args;
 mod getter;
 mod setter;
 mod ty;
@@ -16,10 +16,9 @@ mod vis;
 pub fn getter(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
-    match self::getter::expand(input) {
-        Ok(expaneded) => expaneded.into(),
-        Err(err) => err.into_compile_error().into(),
-    }
+    let expanded = self::getter::expand(input);
+
+    expanded.into()
 }
 
 #[doc = include_str!("../doc/setter.md")]

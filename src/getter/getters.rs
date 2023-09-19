@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::Field;
 
-use crate::extract;
+use crate::args;
 
 use super::{
     BorrowExt, BorrowGetter, BorrowMutGetter, BytesExt, BytesGetter, CloneGetter, CloneableExt,
@@ -19,7 +19,7 @@ pub struct Getters<'a> {
 
 impl<'a> ToTokens for Getters<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let (field_args, field_attrs): (FieldArgs, _) = extract::args(&self.field.attrs, "get");
+        let (field_args, field_attrs): (FieldArgs, _) = args::extract(&self.field.attrs, "get");
 
         if field_args.skip {
             return;

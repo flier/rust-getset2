@@ -4,9 +4,9 @@ use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::{parse_quote, spanned::Spanned};
 
-use crate::ty::TypeExt;
+use crate::{args::AsBool, ty::TypeExt};
 
-use super::{AsBool, Getter, MutGetter};
+use super::{Getter, MutGetter};
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct StrGetter<'a>(&'a Getter<'a>);
@@ -27,7 +27,7 @@ impl<'a> StrGetter<'a> {
             });
 
         quote_spanned! { self.field.span() =>
-            #path (& #field_name)
+            #path (& self.#field_name)
         }
     }
 }
@@ -64,7 +64,7 @@ impl<'a> ToTokens for MutStrGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut str {
-                ::std::string::String::as_mut_str(&mut #field_name)
+                ::std::string::String::as_mut_str(&mut self.#field_name)
             }
         })
     }

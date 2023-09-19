@@ -7,6 +7,7 @@ Derive `Getter` to generate the trivial getters base on the fields in a structur
   - [Mutable](#mutable): `mut` attribute
   - [Naming](#naming): `prefix`, `suffix` and `rename` attributes
   - [Result Type](#result-type): `clone`, `copy` attributes
+
 # Example
 
 
@@ -196,7 +197,7 @@ struct Foo {
     pub suffix_field: usize,
 
     /// `fn x(&self) -> usize`
-    #[get(rename = "x")]
+    #[get(rename(x))]
     pub renamed_field: usize,
 }
 

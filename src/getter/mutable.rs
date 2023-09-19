@@ -3,7 +3,9 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
 use syn::{spanned::Spanned, Ident};
 
-use super::{AsBool, Getter};
+use crate::args::AsBool;
+
+use super::Getter;
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct MutGetter<'a>(&'a Getter<'a>);
@@ -30,7 +32,7 @@ impl<'a> ToTokens for MutGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut #ty {
-                &mut #field_name
+                &mut self.#field_name
             }
         })
     }

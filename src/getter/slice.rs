@@ -4,9 +4,9 @@ use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::{spanned::Spanned, Type};
 
-use crate::extract;
+use crate::{args::AsBool, ty::TypeExt};
 
-use super::{AsBool, Getter, MutGetter};
+use super::{Getter, MutGetter};
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct SliceGetter<'a>(&'a Getter<'a>);
@@ -45,7 +45,7 @@ impl<'a> ToTokens for MutSliceGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut[ #inner_ty ] {
-                #field_name.as_mut_slice()
+                self.#field_name.as_mut_slice()
             }
         })
     }
@@ -68,7 +68,7 @@ impl SliceExt for Getter<'_> {
             .or(self.struct_args.slice.as_bool())
             .unwrap_or_default()
         {
-            if extract::slice_inner_ty(&self.field.ty).is_some() {
+            if self.field.ty.slice_inner_ty().is_some() {
                 return true;
             }
 
@@ -89,18 +89,18 @@ impl SliceExt for Getter<'_> {
         if let Some(ref arg) = self.field_args.slice {
             if let Some(ref path) = arg.args {
                 return quote_spanned! { self.field.span() =>
-                    #path(#field_name)
+                    #path( self.#field_name )
                 };
             }
         }
 
         quote_spanned! { self.field.span() =>
-            #field_name.as_slice()
+            self.#field_name.as_slice()
         }
     }
 
     fn slice_inner_ty(&self) -> Type {
-        match extract::slice_inner_ty(&self.field.ty) {
+        match self.field.ty.slice_inner_ty() {
             Some(ty) => ty,
             None => {
                 abort!(

@@ -283,7 +283,7 @@ fn test_const_getter() {
 fn test_unnamed_struct() {
     #[derive(Default, Getter)]
     #[get(pub, copy)]
-    pub struct Unnamed(#[get(rename = "x")] usize, usize);
+    pub struct Unnamed(#[get(rename(x))] usize, usize);
 
     let unnamed = Unnamed(123, 456);
 

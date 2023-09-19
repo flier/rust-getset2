@@ -3,7 +3,9 @@ use proc_macro2::TokenStream;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 
-use super::{AsBool, Getter};
+use crate::args::AsBool;
+
+use super::Getter;
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct CopyGetter<'a>(&'a Getter<'a>);
@@ -21,7 +23,7 @@ impl<'a> ToTokens for CopyGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis #constness fn #method_name(&self) -> #ty {
-                #field_name
+                self.#field_name
             }
         })
     }

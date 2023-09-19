@@ -13,7 +13,7 @@ mod option;
 mod slice;
 mod str;
 
-pub use self::args::{AsBool, FieldArgs, StructArgs};
+pub use self::args::{FieldArgs, StructArgs};
 pub use self::borrow::{BorrowExt, BorrowGetter, BorrowMutGetter};
 pub use self::bytes::{BytesExt, BytesGetter};
 pub use self::clone::{CloneGetter, CloneableExt};

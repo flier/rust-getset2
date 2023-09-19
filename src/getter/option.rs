@@ -4,9 +4,9 @@ use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::{spanned::Spanned, Type};
 
-use crate::extract;
+use crate::{args::AsBool, ty::TypeExt};
 
-use super::{AsBool, Getter, MutGetter};
+use super::{Getter, MutGetter};
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct OptionGetter<'a>(&'a Getter<'a>);
@@ -24,7 +24,7 @@ impl<'a> ToTokens for OptionGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis #constness fn #method_name(&self) -> Option<& #inner_ty> {
-                ::std::option::Option::as_ref(& #field_name)
+                ::std::option::Option::as_ref(& self.#field_name)
             }
         })
     }
@@ -45,7 +45,7 @@ impl<'a> ToTokens for MutOptionGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> Option<&mut #inner_ty> {
-                ::std::option::Option::as_mut(&mut #field_name)
+                ::std::option::Option::as_mut(&mut self.#field_name)
             }
         })
     }
@@ -66,7 +66,7 @@ impl OptionExt for Getter<'_> {
             .or(self.struct_args.opt.as_bool())
             .unwrap_or_default()
         {
-            if extract::option_inner_ty(&self.field.ty).is_some() {
+            if self.field.ty.option_inner_ty().is_some() {
                 return true;
             }
 
@@ -82,7 +82,7 @@ impl OptionExt for Getter<'_> {
     }
 
     fn option_inner_ty(&self) -> Type {
-        match extract::option_inner_ty(&self.field.ty) {
+        match self.field.ty.option_inner_ty() {
             Some(ty) => ty,
             None => {
                 abort!(self.field.span(), "field should be an `Option` type");

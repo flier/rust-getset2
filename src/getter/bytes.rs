@@ -3,7 +3,9 @@ use proc_macro2::TokenStream;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 
-use super::{AsBool, Getter};
+use crate::args::AsBool;
+
+use super::Getter;
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct BytesGetter<'a>(&'a Getter<'a>);
@@ -15,13 +17,13 @@ impl<'a> BytesGetter<'a> {
         if let Some(ref arg) = self.field_args.bytes {
             if let Some(ref path) = arg.args {
                 return quote_spanned! { self.field.span() =>
-                    #path(#field_name)
+                    #path( self.#field_name )
                 };
             }
         }
 
         quote_spanned! { self.field.span() =>
-            #field_name.as_bytes()
+            self.#field_name.as_bytes()
         }
     }
 }

@@ -2,7 +2,7 @@ use getset2::Getter;
 
 #[derive(Getter)]
 pub struct Struct {
-    #[get(rename = "?")]
+    #[get(rename(?))]
     field: usize,
 }
 

@@ -1,13 +1,13 @@
 use merge::Merge;
 use structmeta::{Flag, NameArgs, NameValue, StructMeta};
-use syn::{LitBool, LitStr, Path, Type};
+use syn::{Ident, LitBool, LitStr, Path, Type};
 
 use crate::vis::Restricted;
 
 #[derive(Clone, Debug, Default, Merge, StructMeta)]
 pub struct StructArgs {
     #[struct_meta(name = "pub")]
-    pub public: Option<NameArgs<Option<Restricted>>>,
+    pub vis: Option<NameArgs<Option<Restricted>>>,
     #[struct_meta(name = "const")]
     #[merge(strategy = merge_flag)]
     pub constness: Flag,
@@ -33,7 +33,7 @@ pub struct StructArgs {
 #[derive(Clone, Debug, Default, Merge, StructMeta)]
 pub struct FieldArgs {
     #[struct_meta(name = "pub")]
-    pub public: Option<NameArgs<Option<Restricted>>>,
+    pub vis: Option<NameArgs<Option<Restricted>>>,
     #[merge(strategy = merge::bool::overwrite_false)]
     pub skip: bool,
     #[struct_meta(name = "const")]
@@ -47,7 +47,7 @@ pub struct FieldArgs {
     pub str: Option<NameArgs<Option<Path>>>,
     pub bytes: Option<NameArgs<Option<Path>>>,
     pub borrow: Option<NameArgs<Type>>,
-    pub rename: Option<LitStr>,
+    pub rename: Option<NameArgs<Ident>>,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,
 }
@@ -55,37 +55,5 @@ pub struct FieldArgs {
 fn merge_flag(lhs: &mut Flag, rhs: Flag) {
     if rhs.span.is_some() {
         lhs.span = rhs.span
-    }
-}
-
-pub trait AsBool {
-    fn as_bool(&self) -> Option<bool>;
-}
-
-impl AsBool for Flag {
-    fn as_bool(&self) -> Option<bool> {
-        self.span.map(|_| true)
-    }
-}
-
-impl AsBool for Option<NameArgs<Option<LitBool>>> {
-    fn as_bool(&self) -> Option<bool> {
-        if let Some(v) = self {
-            v.args.as_ref().map(|v| v.value).or(Some(true))
-        } else {
-            None
-        }
-    }
-}
-
-impl AsBool for Option<NameArgs<Option<Path>>> {
-    fn as_bool(&self) -> Option<bool> {
-        self.as_ref().map(|_| true)
-    }
-}
-
-impl AsBool for Option<NameArgs<Type>> {
-    fn as_bool(&self) -> Option<bool> {
-        self.as_ref().map(|_| true)
     }
 }

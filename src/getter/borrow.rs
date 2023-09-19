@@ -4,7 +4,9 @@ use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::{spanned::Spanned, Type};
 
-use super::{AsBool, Getter, MutGetter};
+use crate::args::AsBool;
+
+use super::{Getter, MutGetter};
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct BorrowGetter<'a>(&'a Getter<'a>);
@@ -22,7 +24,7 @@ impl<'a> ToTokens for BorrowGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis #constness fn #method_name(&self) -> & #borrowed_ty {
-                ::std::borrow::Borrow::borrow(& #field_name)
+                ::std::borrow::Borrow::borrow(& self.#field_name)
             }
         })
     }
@@ -43,7 +45,7 @@ impl<'a> ToTokens for BorrowMutGetter<'a> {
             #( #attrs )*
             #[inline(always)]
             #vis fn #method_name(&mut self) -> &mut #borrowed_ty {
-                ::std::borrow::BorrowMut::borrow_mut(&mut #field_name)
+                ::std::borrow::BorrowMut::borrow_mut(&mut self.#field_name)
             }
         })
     }

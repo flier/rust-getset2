@@ -6,3 +6,12 @@ error: #[derive(Getter)] can only be applied to structure
 6 | |     Bar,
 7 | | }
   | |_^
+
+error: #[derive(Setter)] can only be applied to structure
+  --> tests/compile_error/enum.rs:10:1
+   |
+10 | / pub enum Enum2 {
+11 | |     Foo,
+12 | |     Bar,
+13 | | }
+   | |_^

@@ -1,8 +1,9 @@
 #![allow(clippy::enum_variant_names)]
 
+use structmeta::NameArgs;
 use syn::{
     parse::{Parse, ParseStream},
-    parse_quote_spanned,
+    parse_quote, parse_quote_spanned,
     spanned::Spanned,
     Path, Token, Visibility,
 };
@@ -58,5 +59,20 @@ impl Parse for Restricted {
         } else {
             Err(lookahead.error())
         }
+    }
+}
+
+pub trait AsVisibility {
+    fn as_visibility(&self) -> Option<Visibility>;
+}
+
+impl AsVisibility for Option<&NameArgs<Option<Restricted>>> {
+    fn as_visibility(&self) -> Option<Visibility> {
+        self.and_then(|arg| {
+            arg.args
+                .as_ref()
+                .map(|r| r.clone().into())
+                .or_else(|| Some(parse_quote! { pub }))
+        })
     }
 }
