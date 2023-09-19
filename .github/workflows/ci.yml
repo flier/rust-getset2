@@ -73,7 +73,6 @@ jobs:
   build:
     name: ${{ matrix.name || format('Rust {0}', matrix.rust) }}
     runs-on: ${{ matrix.os || 'ubuntu' }}-latest
-    continue-on-error: ${{ matrix.rust == 'nightly' }}
     strategy:
       fail-fast: false
       matrix:
@@ -120,3 +119,7 @@ jobs:
 
     - name: run tests
       run: cargo test --verbose
+
+    - name: run compile error tests
+      continue-on-error: ${{ matrix.rust == 'nightly' }}
+      run: cargo test --features compile_error

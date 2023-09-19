@@ -13,6 +13,10 @@ categories = ["development-tools::procedural-macro-helpers"]
 rust-version = "1.60"
 resolver = "2"
 
+[features]
+default = []
+compile_error = []
+
 [lib]
 proc-macro = true
 
@@ -24,7 +28,6 @@ proc-macro2 = "1"
 quote = "1"
 structmeta = "0.2"
 syn = { version = "2", features = ["extra-traits"] }
-
 
 [dev-dependencies]
 doc-comment = "0.3"
