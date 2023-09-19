@@ -4,7 +4,7 @@ use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::{spanned::Spanned, Type};
 
-use crate::{args::AsBool, ty::TypeExt};
+use crate::{args, ty::TypeExt};
 
 use super::{Getter, MutGetter};
 
@@ -61,14 +61,7 @@ pub trait SliceExt {
 
 impl SliceExt for Getter<'_> {
     fn is_slice(&self) -> bool {
-        if self
-            .field
-            .args
-            .slice
-            .as_bool()
-            .or(self.struct_args.slice.as_bool())
-            .unwrap_or_default()
-        {
+        if args::merge(&self.field.args.slice, &self.struct_args.slice).unwrap_or_default() {
             if self.field.ty.slice_inner_ty().is_some() {
                 return true;
             }

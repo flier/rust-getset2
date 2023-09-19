@@ -4,7 +4,10 @@ use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::{spanned::Spanned, Type};
 
-use crate::{args::AsBool, ty::TypeExt};
+use crate::{
+    args::{self, AsBool},
+    ty::TypeExt,
+};
 
 use super::{Getter, MutGetter};
 
@@ -59,19 +62,12 @@ pub trait OptionExt {
 
 impl OptionExt for Getter<'_> {
     fn is_option(&self) -> bool {
-        if self
-            .field
-            .args
-            .opt
-            .as_bool()
-            .or(self.struct_args.opt.as_bool())
-            .unwrap_or_default()
-        {
+        if args::merge(&self.field.args.opt, &self.struct_args.opt).unwrap_or_default() {
             if self.field.ty.option_inner_ty().is_some() {
                 return true;
             }
 
-            if self.field.args.opt.as_bool().unwrap_or_default() {
+            if self.field.args.opt.bool() {
                 abort!(
                     self.field.ty.span(),
                     "#[get(opt)] should be applied to an Option type"

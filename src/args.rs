@@ -11,6 +11,10 @@ use crate::vis::{AsVisibility, Restricted};
 
 pub trait AsBool {
     fn as_bool(&self) -> Option<bool>;
+
+    fn bool(&self) -> bool {
+        self.as_bool().unwrap_or_default()
+    }
 }
 
 impl AsBool for Flag {
@@ -65,7 +69,12 @@ where
 
     let attrs = attrs
         .into_iter()
-        .filter(|attr| attr.style == AttrStyle::Outer && attr.path().is_ident("doc"))
+        .filter(|attr| {
+            attr.style == AttrStyle::Outer
+                && (attr.path().is_ident("doc")
+                    || attr.path().is_ident("cfg")
+                    || attr.path().is_ident("allow"))
+        })
         .collect::<Vec<_>>();
 
     (args, attrs)
@@ -96,6 +105,14 @@ pub fn constness(
     } else {
         None
     }
+}
+
+pub fn merge<L, R>(lhs: &L, rhs: &R) -> Option<bool>
+where
+    L: AsBool,
+    R: AsBool,
+{
+    lhs.as_bool().or(rhs.as_bool())
 }
 
 pub fn prefix(

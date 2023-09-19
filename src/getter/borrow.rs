@@ -59,7 +59,7 @@ pub trait BorrowExt {
 
 impl BorrowExt for Getter<'_> {
     fn is_borrow(&self) -> bool {
-        self.field.args.borrow.as_bool().unwrap_or_default()
+        self.field.args.borrow.bool()
     }
 
     fn borrowed_ty(&self) -> &Type {

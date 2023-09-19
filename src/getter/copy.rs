@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 
-use crate::args::AsBool;
+use crate::args;
 
 use super::Getter;
 
@@ -35,11 +35,6 @@ pub trait CopyableExt {
 
 impl CopyableExt for Getter<'_> {
     fn is_copyable(&self) -> bool {
-        self.field
-            .args
-            .copy
-            .as_bool()
-            .or(self.struct_args.copy.as_bool())
-            .unwrap_or_default()
+        args::merge(&self.field.args.copy, &self.struct_args.copy).unwrap_or_default()
     }
 }

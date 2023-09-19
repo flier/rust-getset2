@@ -4,7 +4,7 @@ use proc_macro_error::abort;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::{parse_quote, spanned::Spanned};
 
-use crate::{args::AsBool, ty::TypeExt};
+use crate::{args, ty::TypeExt};
 
 use super::{Getter, MutGetter};
 
@@ -77,14 +77,7 @@ pub trait StrExt {
 
 impl StrExt for Getter<'_> {
     fn is_str(&self) -> bool {
-        if self
-            .field
-            .args
-            .str
-            .as_bool()
-            .or(self.struct_args.str.as_bool())
-            .unwrap_or_default()
-        {
+        if args::merge(&self.field.args.str, &self.struct_args.str).unwrap_or_default() {
             if self.field.ty.is_string() {
                 return true;
             }

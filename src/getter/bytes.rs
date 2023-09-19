@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::{quote_spanned, ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 
-use crate::args::AsBool;
+use crate::args;
 
 use super::Getter;
 
@@ -52,11 +52,6 @@ pub trait BytesExt {
 
 impl BytesExt for Getter<'_> {
     fn is_bytes(&self) -> bool {
-        self.field
-            .args
-            .bytes
-            .as_bool()
-            .or(self.struct_args.bytes.as_bool())
-            .unwrap_or_default()
+        args::merge(&self.field.args.bytes, &self.struct_args.bytes).unwrap_or_default()
     }
 }

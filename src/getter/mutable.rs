@@ -3,7 +3,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
 use syn::{spanned::Spanned, Ident};
 
-use crate::args::AsBool;
+use crate::args;
 
 use super::Getter;
 
@@ -44,11 +44,10 @@ pub trait MutableExt {
 
 impl MutableExt for Getter<'_> {
     fn as_mutable(&self) -> Option<MutGetter> {
-        self.field
-            .args
-            .mutable
-            .as_bool()
-            .or(self.struct_args.mutable.as_bool())
-            .and_then(|b| if b { Some(self.into()) } else { None })
+        if args::merge(&self.field.args.mutable, &self.struct_args.mutable).unwrap_or_default() {
+            Some(self.into())
+        } else {
+            None
+        }
     }
 }
