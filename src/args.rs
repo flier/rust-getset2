@@ -45,6 +45,14 @@ impl AsBool for Option<NameArgs<Type>> {
     }
 }
 
+pub fn merge<L, R>(lhs: &L, rhs: &R) -> Option<bool>
+where
+    L: AsBool,
+    R: AsBool,
+{
+    lhs.as_bool().or(rhs.as_bool())
+}
+
 pub fn extract<'a, I, T>(attrs: I, name: &str) -> (T, Vec<&'a Attribute>)
 where
     I: IntoIterator<Item = &'a Attribute>,
@@ -96,23 +104,11 @@ pub fn constness(
     field_constness: &Option<NameArgs<Option<LitBool>>>,
     struct_constness: &Flag,
 ) -> Option<Token![const]> {
-    if field_constness
-        .as_bool()
-        .or(struct_constness.as_bool())
-        .unwrap_or_default()
-    {
+    if merge(field_constness, struct_constness).unwrap_or_default() {
         Some(parse_quote! { const })
     } else {
         None
     }
-}
-
-pub fn merge<L, R>(lhs: &L, rhs: &R) -> Option<bool>
-where
-    L: AsBool,
-    R: AsBool,
-{
-    lhs.as_bool().or(rhs.as_bool())
 }
 
 pub fn prefix(
