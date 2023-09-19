@@ -18,7 +18,7 @@ impl<'a> ToTokens for OptionGetter<'a> {
         let constness = self.constness();
         let method_name = self.method_name();
         let inner_ty = self.option_inner_ty();
-        let field_name = self.field_name();
+        let field_name = self.field.name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*
@@ -39,7 +39,7 @@ impl<'a> ToTokens for MutOptionGetter<'a> {
         let attrs = self.field_attrs;
         let method_name = self.method_name();
         let inner_ty = self.option_inner_ty();
-        let field_name = self.field_name();
+        let field_name = self.field.name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*

@@ -24,10 +24,6 @@ impl<'a> Getter<'a> {
         args::constness(&self.field_args.constness, &self.struct_args.constness)
     }
 
-    pub fn field_name(&self) -> TokenStream {
-        args::field_name(self.field, self.field_idx)
-    }
-
     pub fn method_name(&self) -> Ident {
         let prefix = self.prefix().unwrap_or_default();
         let name = self.name();
@@ -45,7 +41,7 @@ impl<'a> Getter<'a> {
     }
 
     pub fn name(&self) -> Ident {
-        args::name(&self.field_args.rename, &self.field.ident, self.field_idx)
+        args::name(&self.field_args.rename, &self.field.ident, self.field.idx)
     }
 }
 
@@ -54,7 +50,7 @@ impl<'a> ToTokens for Getter<'a> {
         let vis = self.vis();
         let attrs = self.field_attrs;
         let ty = &self.field.ty;
-        let field_name = self.field_name();
+        let field_name = self.field.name();
         let constness = self.constness();
         let method_name = self.method_name();
 

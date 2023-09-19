@@ -6,7 +6,7 @@ use syn::{spanned::Spanned, Type};
 
 use crate::args::AsBool;
 
-use super::{Getter, MutGetter};
+use super::{ Getter, MutGetter};
 
 #[derive(Clone, Debug, Deref, From)]
 pub struct BorrowGetter<'a>(&'a Getter<'a>);
@@ -17,7 +17,7 @@ impl<'a> ToTokens for BorrowGetter<'a> {
         let attrs = self.field_attrs;
         let constness = self.constness();
         let method_name = self.method_name();
-        let field_name = self.field_name();
+        let field_name = self.field.name();
         let borrowed_ty = self.borrowed_ty();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
@@ -38,7 +38,7 @@ impl<'a> ToTokens for BorrowMutGetter<'a> {
         let vis = self.vis();
         let attrs = self.field_attrs;
         let method_name = self.method_name();
-        let field_name = self.field_name();
+        let field_name = self.field.name();
         let borrowed_ty = self.borrowed_ty();
 
         tokens.append_all(quote_spanned! { self.field.span() =>

@@ -1,8 +1,8 @@
+use derive_more::Constructor;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::Field;
 
-use crate::args;
+use crate::{args, field::Field};
 
 use super::{
     BorrowExt, BorrowGetter, BorrowMutGetter, BytesExt, BytesGetter, CloneGetter, CloneableExt,
@@ -10,11 +10,10 @@ use super::{
     MutableExt, OptionExt, OptionGetter, SliceExt, SliceGetter, StrExt, StrGetter, StructArgs,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Constructor)]
 pub struct Getters<'a> {
     pub struct_args: &'a StructArgs,
-    pub field: &'a Field,
-    pub field_idx: usize,
+    pub field: Field<'a>,
 }
 
 impl<'a> ToTokens for Getters<'a> {

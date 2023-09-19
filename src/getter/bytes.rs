@@ -12,7 +12,7 @@ pub struct BytesGetter<'a>(&'a Getter<'a>);
 
 impl<'a> BytesGetter<'a> {
     fn as_bytes(&self) -> TokenStream {
-        let field_name = self.field_name();
+        let field_name = self.field.name();
 
         if let Some(ref arg) = self.field_args.bytes {
             if let Some(ref path) = arg.args {

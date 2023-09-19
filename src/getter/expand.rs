@@ -3,7 +3,7 @@ use proc_macro_error::abort;
 use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, Data, DataStruct, DeriveInput, Fields, FieldsNamed, FieldsUnnamed};
 
-use crate::args;
+use crate::{args, field::Field};
 
 use super::{Getters, StructArgs};
 
@@ -26,11 +26,7 @@ pub fn expand(input: DeriveInput) -> TokenStream {
         let getters = fields
             .into_iter()
             .enumerate()
-            .map(|(field_idx, field)| Getters {
-                struct_args: &struct_args,
-                field,
-                field_idx,
-            });
+            .map(|(field_idx, field)| Getters::new(&struct_args, Field::new(field, field_idx)));
 
         quote_spanned! { input.span() =>
             impl #impl_generics #name #ty_generics #where_clause {

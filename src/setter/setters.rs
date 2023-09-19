@@ -1,16 +1,15 @@
+use derive_more::Constructor;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
-use syn::Field;
 
-use crate::args;
+use crate::{args, field::Field};
 
 use super::{FieldArgs, Setter, StructArgs};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Constructor)]
 pub struct Setters<'a> {
     pub struct_args: &'a StructArgs,
-    pub field: &'a Field,
-    pub field_idx: usize,
+    pub field: Field<'a>,
 }
 
 impl<'a> ToTokens for Setters<'a> {

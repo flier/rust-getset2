@@ -1,11 +1,10 @@
 use merge::Merge;
-use proc_macro2::TokenStream;
 use proc_macro_error::abort;
-use quote::{format_ident, quote};
+use quote::format_ident;
 use structmeta::{Flag, NameArgs, NameValue};
 use syn::{
-    parse::Parse, parse_quote, spanned::Spanned, AttrStyle, Attribute, Field, Ident, Index,
-    LitBool, LitStr, Member, Path, Token, Type, Visibility,
+    parse::Parse, parse_quote, spanned::Spanned, AttrStyle, Attribute, Ident, LitBool, LitStr,
+    Path, Token, Type, Visibility,
 };
 
 use crate::vis::{AsVisibility, Restricted};
@@ -96,20 +95,6 @@ pub fn constness(
         Some(parse_quote! { const })
     } else {
         None
-    }
-}
-
-pub fn field_name(field: &Field, idx: usize) -> TokenStream {
-    match field.ident {
-        Some(ref name) => quote! { #name },
-        None => {
-            let idx = Member::Unnamed(Index {
-                index: idx as u32,
-                span: field.span(),
-            });
-
-            quote! { #idx }
-        }
     }
 }
 

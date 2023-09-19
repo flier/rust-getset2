@@ -26,7 +26,7 @@ impl<'a> ToTokens for MutGetter<'a> {
         let attrs = self.field_attrs;
         let method_name = self.method_name();
         let ty = &self.field.ty;
-        let field_name = self.field_name();
+        let field_name = self.field.name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*

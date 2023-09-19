@@ -13,7 +13,7 @@ pub struct StrGetter<'a>(&'a Getter<'a>);
 
 impl<'a> StrGetter<'a> {
     fn as_str(&self) -> TokenStream {
-        let field_name = self.field_name();
+        let field_name = self.field.name();
 
         let path = self
             .field_args
@@ -58,7 +58,7 @@ impl<'a> ToTokens for MutStrGetter<'a> {
         let vis = self.vis();
         let attrs = self.field_attrs;
         let method_name = self.method_name();
-        let field_name = self.field_name();
+        let field_name = self.field.name();
 
         tokens.append_all(quote_spanned! { self.field.span() =>
             #( #attrs )*

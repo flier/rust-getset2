@@ -20,10 +20,6 @@ impl<'a> Setter<'a> {
         args::vis(&self.field_args.vis, &self.struct_args.vis, &self.field.vis)
     }
 
-    pub fn field_name(&self) -> TokenStream {
-        args::field_name(self.field, self.field_idx)
-    }
-
     pub fn method_name(&self) -> Ident {
         let prefix = self.prefix().unwrap_or_else(|| "set_".to_string());
         let name = self.name();
@@ -41,7 +37,7 @@ impl<'a> Setter<'a> {
     }
 
     pub fn name(&self) -> Ident {
-        args::name(&self.field_args.rename, &self.field.ident, self.field_idx)
+        args::name(&self.field_args.rename, &self.field.ident, self.field.idx)
     }
 }
 
@@ -50,7 +46,7 @@ impl<'a> ToTokens for Setter<'a> {
         let vis = self.vis();
         let attrs = self.field_attrs;
         let ty = &self.field.ty;
-        let field_name = self.field_name();
+        let field_name = self.field.name();
         let method_name = self.method_name();
         let arg_name = self.name();
 
