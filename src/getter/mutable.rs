@@ -1,53 +1,37 @@
-use derive_more::{Deref, From};
-use proc_macro2::TokenStream;
-use quote::{format_ident, quote_spanned, ToTokens, TokenStreamExt};
-use syn::{spanned::Spanned, Ident};
+use derive_more::{Deref, DerefMut};
+use quote::format_ident;
+use syn::{parse_quote_spanned, spanned::Spanned, ItemFn};
 
 use crate::args;
 
-use super::Getter;
+use super::Context;
 
-#[derive(Clone, Debug, Deref, From)]
-pub struct MutGetter<'a>(&'a Getter<'a>);
+#[derive(Clone, Debug, Deref, DerefMut)]
+pub struct MutGetter(ItemFn);
 
-impl<'a> MutGetter<'a> {
-    pub fn method_name(&self) -> Ident {
-        let prefix = self.prefix().unwrap_or_default();
-        let arg_name = self.field.arg_name();
-        let suffix = self.suffix().unwrap_or_default();
+impl MutGetter {
+    pub fn new(ctx: &Context) -> Self {
+        let attrs = &ctx.field.attrs;
+        let vis = ctx.vis();
+        let prefix = ctx.prefix().unwrap_or_default();
+        let basename = ctx.field.basename().to_string();
+        let suffix = ctx.suffix().unwrap_or_default();
+        let method_name = format_ident!("{}{}{}_mut", prefix, basename, suffix);
+        let ty = ctx.field.ty.clone();
+        let field_name = ctx.field.name();
 
-        format_ident!("{}{}{}_mut", prefix, arg_name.to_string(), suffix)
-    }
-}
-
-impl<'a> ToTokens for MutGetter<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let vis = self.vis();
-        let attrs = self.field.attrs;
-        let method_name = self.method_name();
-        let ty = &self.field.ty;
-        let field_name = self.field.name();
-
-        tokens.append_all(quote_spanned! { self.field.span() =>
+        Self(parse_quote_spanned! { ctx.field.span() =>
             #( #attrs )*
             #[inline(always)]
-            #vis fn #method_name(&mut self) -> &mut #ty {
-                &mut self.#field_name
+            #vis fn #method_name( &mut self ) -> &mut #ty {
+                &mut self . #field_name
             }
         })
     }
 }
 
-pub trait MutableExt {
-    fn as_mutable(&self) -> Option<MutGetter>;
-}
-
-impl MutableExt for Getter<'_> {
-    fn as_mutable(&self) -> Option<MutGetter> {
-        if args::merge(&self.field.args.mutable, &self.struct_args.mutable).unwrap_or_default() {
-            Some(self.into())
-        } else {
-            None
-        }
+impl Context<'_> {
+    pub fn is_mutable(&self) -> bool {
+        args::merge(&self.field.args.mutable, &self.struct_args.mutable).unwrap_or_default()
     }
 }

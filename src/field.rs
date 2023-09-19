@@ -4,13 +4,13 @@ use quote::quote;
 use syn::{spanned::Spanned, Index, Member};
 
 #[derive(Clone, Debug, Constructor, Deref)]
-pub struct Field<'a> {
+pub struct Field {
     #[deref]
-    field: &'a syn::Field,
+    pub field: syn::Field,
     pub idx: usize,
 }
 
-impl<'a> Field<'a> {
+impl Field {
     pub fn name(&self) -> TokenStream {
         match self.field.ident {
             Some(ref name) => quote! { #name },

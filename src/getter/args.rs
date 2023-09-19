@@ -23,7 +23,11 @@ pub struct StructArgs {
     #[merge(strategy = merge_flag)]
     pub slice: Flag,
     #[merge(strategy = merge_flag)]
+    pub mut_slice: Flag,
+    #[merge(strategy = merge_flag)]
     pub str: Flag,
+    #[merge(strategy = merge_flag)]
+    pub mut_str: Flag,
     #[merge(strategy = merge_flag)]
     pub bytes: Flag,
     pub prefix: Option<NameValue<LitStr>>,
@@ -44,9 +48,12 @@ pub struct FieldArgs {
     pub mutable: Option<NameArgs<Option<LitBool>>>,
     pub opt: Option<NameArgs<Option<LitBool>>>,
     pub slice: Option<NameArgs<Option<Path>>>,
+    pub mut_slice: Option<NameArgs<Option<Path>>>,
     pub str: Option<NameArgs<Option<Path>>>,
+    pub mut_str: Option<NameArgs<Option<Path>>>,
     pub bytes: Option<NameArgs<Option<Path>>>,
     pub borrow: Option<NameArgs<Type>>,
+    pub borrow_mut: Option<NameArgs<Type>>,
     pub rename: Option<NameArgs<Ident>>,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,

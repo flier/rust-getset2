@@ -1,56 +1,65 @@
-use derive_more::{Deref, From};
-use proc_macro2::TokenStream;
+use derive_more::{Deref, DerefMut};
 use proc_macro_error::abort;
-use quote::{quote_spanned, ToTokens, TokenStreamExt};
-use syn::{spanned::Spanned, Type};
+use syn::{parse_quote_spanned, spanned::Spanned, Type};
 
 use crate::{
     args::{self, AsBool},
     ty::TypeExt,
 };
 
-use super::{Getter, MutGetter};
+use super::{Context, Getter, MutGetter};
 
-#[derive(Clone, Debug, Deref, From)]
-pub struct OptionGetter<'a>(&'a Getter<'a>);
+#[derive(Clone, Debug, Deref, DerefMut)]
+pub struct OptionGetter(Getter);
 
-impl<'a> ToTokens for OptionGetter<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let vis = self.vis();
-        let attrs = self.field.attrs;
-        let constness = self.constness();
-        let method_name = self.method_name();
-        let inner_ty = self.option_inner_ty();
-        let field_name = self.field.name();
+impl OptionGetter {
+    pub fn new(ctx: &Context) -> Self {
+        let mut getter = Getter::new(ctx);
 
-        tokens.append_all(quote_spanned! { self.field.span() =>
-            #( #attrs )*
-            #[inline(always)]
-            #vis #constness fn #method_name(&self) -> Option<& #inner_ty> {
-                ::std::option::Option::as_ref(& self.#field_name)
+        getter.sig.output = {
+            let inner_ty = ctx.option_inner_ty();
+
+            parse_quote_spanned! { ctx.field.ty.span() =>
+                -> Option<& #inner_ty>
             }
-        })
+        };
+
+        getter.block = {
+            let field_name = ctx.field.name();
+
+            parse_quote_spanned!( ctx.field.span() => {
+                ::std::option::Option::as_ref(& self.#field_name)
+            })
+        };
+
+        Self(getter)
     }
 }
 
-#[derive(Clone, Debug, Deref, From)]
-pub struct MutOptionGetter<'a>(&'a MutGetter<'a>);
+#[derive(Clone, Debug, Deref, DerefMut)]
+pub struct MutOptionGetter(MutGetter);
 
-impl<'a> ToTokens for MutOptionGetter<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let vis = self.vis();
-        let attrs = self.field.attrs;
-        let method_name = self.method_name();
-        let inner_ty = self.option_inner_ty();
-        let field_name = self.field.name();
+impl MutOptionGetter {
+    pub fn new(ctx: &Context) -> Self {
+        let mut getter = MutGetter::new(ctx);
 
-        tokens.append_all(quote_spanned! { self.field.span() =>
-            #( #attrs )*
-            #[inline(always)]
-            #vis fn #method_name(&mut self) -> Option<&mut #inner_ty> {
-                ::std::option::Option::as_mut(&mut self.#field_name)
+        getter.sig.output = {
+            let inner_ty = ctx.option_inner_ty();
+
+            parse_quote_spanned! { ctx.field.ty.span() =>
+                -> Option<&mut #inner_ty>
             }
-        })
+        };
+
+        getter.block = {
+            let field_name = ctx.field.name();
+
+            parse_quote_spanned!( ctx.field.span() => {
+                ::std::option::Option::as_mut(&mut self.#field_name)
+            })
+        };
+
+        Self(getter)
     }
 }
 
@@ -60,7 +69,7 @@ pub trait OptionExt {
     fn option_inner_ty(&self) -> Type;
 }
 
-impl OptionExt for Getter<'_> {
+impl OptionExt for Context<'_> {
     fn is_option(&self) -> bool {
         if args::merge(&self.field.args.opt, &self.struct_args.opt).unwrap_or_default() {
             if self.field.ty.option_inner_ty().is_some() {

@@ -6,15 +6,15 @@ use crate::{args, field::Field as BaseField};
 use super::FieldArgs;
 
 #[derive(Clone, Debug, Constructor, Deref)]
-pub struct Field<'a> {
+pub struct Field {
     #[deref]
-    field: &'a BaseField<'a>,
+    field: BaseField,
     pub args: FieldArgs,
-    pub attrs: &'a [&'a Attribute],
+    pub attrs: Vec<Attribute>,
 }
 
-impl<'a> Field<'a> {
-    pub fn arg_name(&self) -> Ident {
+impl Field {
+    pub fn basename(&self) -> Ident {
         args::name(&self.args.rename, &self.field.ident, self.field.idx)
     }
 }

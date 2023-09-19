@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    ffi::{CStr, CString},
+    ffi::{CStr, CString, OsStr, OsString},
     path::{Path, PathBuf},
 };
 
@@ -195,7 +195,7 @@ fn test_slice_field() {
 fn test_get_str() {
     #[derive(Default, Getter)]
     struct Foo {
-        #[get(str, mut)]
+        #[get(str, mut_str)]
         string_field: String,
     }
 
@@ -242,15 +242,32 @@ fn test_get_bytes() {
 fn test_get_borrow() {
     #[derive(Default, Getter)]
     struct Foo {
-        #[get(borrow(Path))]
+        #[get(borrow(Path), mut)]
         path_field: PathBuf,
     }
 
-    let foo = Foo {
-        path_field: PathBuf::from("/tmp"),
-    };
+    let mut foo = Foo::default();
+
+    foo.path_field_mut().push("/tmp");
 
     assert_eq!(foo.path_field(), Path::new("/tmp"));
+}
+
+#[test]
+fn test_get_borrow_mut() {
+    #[derive(Default, Getter)]
+    struct Foo {
+        #[get(borrow(OsStr), borrow_mut(OsStr))]
+        os_str_field: OsString,
+    }
+
+    let mut foo = Foo {
+        os_str_field: OsString::from("foo"),
+    };
+
+    foo.os_str_field_mut().make_ascii_uppercase();
+
+    assert_eq!(foo.os_str_field(), OsStr::new("FOO"));
 }
 
 #[test]

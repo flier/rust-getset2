@@ -1,40 +1,39 @@
-use derive_more::{Deref, From};
-use proc_macro2::TokenStream;
-use quote::{quote_spanned, ToTokens, TokenStreamExt};
-use syn::spanned::Spanned;
+use derive_more::{Deref, DerefMut};
+use syn::{parse_quote_spanned, spanned::Spanned};
 
 use crate::args;
 
-use super::Getter;
+use super::{Context, Getter};
 
-#[derive(Clone, Debug, Deref, From)]
-pub struct CopyGetter<'a>(&'a Getter<'a>);
+#[derive(Clone, Debug, Deref, DerefMut)]
+pub struct CopyGetter(Getter);
 
-impl<'a> ToTokens for CopyGetter<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let vis = self.vis();
-        let attrs = self.field.attrs;
-        let constness = self.constness();
-        let method_name = self.method_name();
-        let ty = &self.field.ty;
-        let field_name = self.field.name();
+impl CopyGetter {
+    pub fn new(ctx: &Context) -> Self {
+        let mut getter = Getter::new(ctx);
 
-        tokens.append_all(quote_spanned! { self.field.span() =>
-            #( #attrs )*
-            #[inline(always)]
-            #vis #constness fn #method_name(&self) -> #ty {
-                self.#field_name
+        getter.sig.output = {
+            let ty = &ctx.field.ty;
+
+            parse_quote_spanned! { ctx.field.ty.span() =>
+                -> #ty
             }
-        })
+        };
+
+        getter.block = {
+            let field_name = ctx.field.name();
+
+            parse_quote_spanned! ( ctx.field.span() => {
+                self.#field_name
+            })
+        };
+
+        Self(getter)
     }
 }
 
-pub trait CopyableExt {
-    fn is_copyable(&self) -> bool;
-}
-
-impl CopyableExt for Getter<'_> {
-    fn is_copyable(&self) -> bool {
+impl Context<'_> {
+    pub fn is_copyable(&self) -> bool {
         args::merge(&self.field.args.copy, &self.struct_args.copy).unwrap_or_default()
     }
 }

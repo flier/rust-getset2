@@ -27,7 +27,7 @@ proc-macro-error = { version = "1", default-features = false }
 proc-macro2 = "1"
 quote = "1"
 structmeta = "0.2"
-syn = { version = "2", features = ["extra-traits"] }
+syn = { version = "2", features = ["extra-traits", "full"] }
 
 [dev-dependencies]
 doc-comment = "0.3"

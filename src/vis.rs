@@ -20,16 +20,24 @@ impl From<Restricted> for Visibility {
     fn from(restricted: Restricted) -> Self {
         match restricted {
             Restricted::PubSelf { self_token } => {
-                parse_quote_spanned! { self_token.span() => pub(#self_token) }
+                parse_quote_spanned! { self_token.span() =>
+                    pub(#self_token)
+                }
             }
             Restricted::PubSuper { super_token } => {
-                parse_quote_spanned! { super_token.span() => pub(#super_token) }
+                parse_quote_spanned! { super_token.span() =>
+                    pub(#super_token)
+                }
             }
             Restricted::PubCrate { crate_token } => {
-                parse_quote_spanned! { crate_token.span() => pub(#crate_token) }
+                parse_quote_spanned! { crate_token.span() =>
+                    pub(#crate_token)
+                }
             }
             Restricted::PubInModule { in_token, path } => {
-                parse_quote_spanned! { in_token.span() => pub(#in_token #path) }
+                parse_quote_spanned! { in_token.span() =>
+                    pub(#in_token #path)
+                }
             }
         }
     }

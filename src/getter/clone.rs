@@ -1,40 +1,31 @@
-use derive_more::{Deref, From};
-use proc_macro2::TokenStream;
-use quote::{quote_spanned, ToTokens, TokenStreamExt};
-use syn::spanned::Spanned;
+use derive_more::{Deref, DerefMut};
+use syn::{parse_quote_spanned, spanned::Spanned};
 
 use crate::args;
 
-use super::Getter;
+use super::{Context, CopyGetter};
 
-#[derive(Clone, Debug, Deref, From)]
-pub struct CloneGetter<'a>(&'a Getter<'a>);
+#[derive(Clone, Debug, Deref, DerefMut)]
+pub struct CloneGetter(CopyGetter);
 
-impl<'a> ToTokens for CloneGetter<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let vis = self.vis();
-        let attrs = self.field.attrs;
-        let constness = self.constness();
-        let method_name = self.method_name();
-        let ty = &self.field.ty;
-        let field_name = self.field.name();
+impl CloneGetter {
+    pub fn new(ctx: &Context) -> Self {
+        let mut getter = CopyGetter::new(ctx);
 
-        tokens.append_all(quote_spanned! { self.field.span() =>
-            #( #attrs )*
-            #[inline(always)]
-            #vis #constness fn #method_name(&self) -> #ty {
+        getter.block = {
+            let field_name = ctx.field.name();
+
+            parse_quote_spanned!(ctx.field.span() => {
                 ::std::clone::Clone::clone(& self.#field_name)
-            }
-        })
+            })
+        };
+
+        Self(getter)
     }
 }
 
-pub trait CloneableExt {
-    fn is_cloneable(&self) -> bool;
-}
-
-impl CloneableExt for Getter<'_> {
-    fn is_cloneable(&self) -> bool {
+impl Context<'_> {
+    pub fn is_cloneable(&self) -> bool {
         args::merge(&self.field.args.clone, &self.struct_args.clone).unwrap_or_default()
     }
 }

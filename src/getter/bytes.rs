@@ -1,57 +1,48 @@
 use derive_more::{Deref, From};
-use proc_macro2::TokenStream;
-use quote::{quote_spanned, ToTokens, TokenStreamExt};
-use syn::spanned::Spanned;
+use syn::{parse_quote, parse_quote_spanned, spanned::Spanned, Block};
 
 use crate::args;
 
-use super::Getter;
+use super::{Context, Getter};
 
 #[derive(Clone, Debug, Deref, From)]
-pub struct BytesGetter<'a>(&'a Getter<'a>);
+pub struct BytesGetter(Getter);
 
-impl<'a> BytesGetter<'a> {
-    fn as_bytes(&self) -> TokenStream {
+impl BytesGetter {
+    pub fn new(ctx: &Context) -> Self {
+        let mut getter = Getter::new(ctx);
+
+        getter.sig.output = parse_quote! {
+            -> &[u8]
+        };
+        getter.block = Box::new(ctx.as_bytes());
+
+        Self(getter)
+    }
+}
+
+impl Context<'_> {
+    pub fn is_bytes(&self) -> bool {
+        args::merge(&self.field.args.bytes, &self.struct_args.bytes).unwrap_or_default()
+    }
+
+    pub fn as_bytes(&self) -> Block {
         let field_name = self.field.name();
 
-        if let Some(ref arg) = self.field.args.bytes {
-            if let Some(ref path) = arg.args {
-                return quote_spanned! { self.field.span() =>
-                    #path( self.#field_name )
-                };
-            }
+        if let Some(path) = self
+            .field
+            .args
+            .bytes
+            .as_ref()
+            .and_then(|arg| arg.args.as_ref())
+        {
+            parse_quote_spanned!(self.field.span() => {
+                #path( self.#field_name )
+            })
+        } else {
+            parse_quote_spanned!(self.field.span() => {
+                self.#field_name.as_bytes()
+            })
         }
-
-        quote_spanned! { self.field.span() =>
-            self.#field_name.as_bytes()
-        }
-    }
-}
-
-impl<'a> ToTokens for BytesGetter<'a> {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let vis = self.vis();
-        let attrs = self.field.attrs;
-        let constness = self.constness();
-        let method_name = self.method_name();
-        let as_bytes = self.as_bytes();
-
-        tokens.append_all(quote_spanned! { self.field.span() =>
-            #( #attrs )*
-            #[inline(always)]
-            #vis #constness fn #method_name(&self) -> &[u8] {
-                #as_bytes
-            }
-        })
-    }
-}
-
-pub trait BytesExt {
-    fn is_bytes(&self) -> bool;
-}
-
-impl BytesExt for Getter<'_> {
-    fn is_bytes(&self) -> bool {
-        args::merge(&self.field.args.bytes, &self.struct_args.bytes).unwrap_or_default()
     }
 }

@@ -53,9 +53,9 @@ where
     lhs.as_bool().or(rhs.as_bool())
 }
 
-pub fn extract<'a, I, T>(attrs: I, name: &str) -> (T, Vec<&'a Attribute>)
+pub fn extract<I, T>(attrs: I, name: &str) -> (T, Vec<Attribute>)
 where
-    I: IntoIterator<Item = &'a Attribute>,
+    I: IntoIterator<Item = Attribute>,
     T: Default + Parse + Merge,
 {
     let (args, attrs): (Vec<_>, Vec<_>) = attrs

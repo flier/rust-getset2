@@ -5,14 +5,21 @@ use syn::{spanned::Spanned, Data, DataStruct, DeriveInput, Fields, FieldsNamed, 
 
 use crate::{args, field::Field};
 
-use super::{Builder, StructArgs};
+use super::{Context, StructArgs};
 
 pub fn expand(input: DeriveInput) -> TokenStream2 {
-    let (struct_args, _): (StructArgs, _) = args::extract(&input.attrs, "set");
+    let DeriveInput {
+        attrs,
+        ident,
+        generics,
+        data,
+        ..
+    } = input.clone();
 
-    if let Data::Struct(DataStruct { fields, .. }) = &input.data {
-        let name = &input.ident;
-        let generics = &input.generics;
+    let (struct_args, _): (StructArgs, _) = args::extract(attrs, "set");
+
+    if let Data::Struct(DataStruct { fields, .. }) = data {
+        let generics = generics;
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
         let fields = match fields {
@@ -26,10 +33,10 @@ pub fn expand(input: DeriveInput) -> TokenStream2 {
         let setters = fields
             .into_iter()
             .enumerate()
-            .map(|(field_idx, field)| Builder::new(&struct_args, Field::new(field, field_idx)));
+            .map(|(field_idx, field)| Context::new(&struct_args, Field::new(field, field_idx)));
 
         quote_spanned! { input.span() =>
-            impl #impl_generics #name #ty_generics #where_clause {
+            impl #impl_generics #ident #ty_generics #where_clause {
                 #( #setters )*
             }
         }
