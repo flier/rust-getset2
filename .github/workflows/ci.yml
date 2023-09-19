@@ -81,11 +81,13 @@ jobs:
         cargo udeps
 
   build:
-    name: ${{ matrix.name || format('Rust {0}', matrix.rust) }}
-    runs-on: ${{ matrix.os || 'ubuntu' }}-latest
+    name: ${{ matrix.name || format('Rust {0} @ {1}', matrix.rust, matrix.os) }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - ubuntu-latest
         rust:
           - nightly
           - beta
@@ -94,10 +96,10 @@ jobs:
         include:
           - rust: stable
             name: MacOS
-            os: macos
-          - rust: stable
+            os: macos-latest
+          - rust: nightly
             name: Windows
-            os: windows
+            os: windows-latest
     env:
       RUST_BACKTRACE: full
 
