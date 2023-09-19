@@ -5,7 +5,7 @@ use syn::{spanned::Spanned, Data, DataStruct, DeriveInput, Fields, FieldsNamed, 
 
 use crate::{args, field::Field};
 
-use super::{Setters, StructArgs};
+use super::{Builder, StructArgs};
 
 pub fn expand(input: DeriveInput) -> TokenStream2 {
     let (struct_args, _): (StructArgs, _) = args::extract(&input.attrs, "set");
@@ -26,7 +26,7 @@ pub fn expand(input: DeriveInput) -> TokenStream2 {
         let setters = fields
             .into_iter()
             .enumerate()
-            .map(|(field_idx, field)| Setters::new(&struct_args, Field::new(field, field_idx)));
+            .map(|(field_idx, field)| Builder::new(&struct_args, Field::new(field, field_idx)));
 
         quote_spanned! { input.span() =>
             impl #impl_generics #name #ty_generics #where_clause {

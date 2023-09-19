@@ -12,12 +12,12 @@ use super::{
 };
 
 #[derive(Clone, Debug, Constructor)]
-pub struct Getters<'a> {
+pub struct Builder<'a> {
     pub struct_args: &'a StructArgs,
     pub field: BaseField<'a>,
 }
 
-impl<'a> ToTokens for Getters<'a> {
+impl<'a> ToTokens for Builder<'a> {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let (field_args, field_attrs): (FieldArgs, _) = args::extract(&self.field.attrs, "get");
 

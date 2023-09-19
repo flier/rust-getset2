@@ -5,12 +5,12 @@ use syn::{spanned::Spanned, Ident, Token, Visibility};
 
 use crate::args;
 
-use super::{Field, Getters};
+use super::{Builder, Field};
 
 #[derive(Clone, Debug, Constructor, Deref)]
 pub struct Getter<'a> {
     #[deref]
-    getters: &'a Getters<'a>,
+    builder: &'a Builder<'a>,
     pub field: Field<'a>,
 }
 
