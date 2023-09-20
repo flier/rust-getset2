@@ -48,7 +48,7 @@ impl MutSliceGetter {
 
 impl Context<'_> {
     pub fn is_slice(&self) -> bool {
-        if args::merge(&self.field.args.slice, &self.struct_args.slice).unwrap_or_default() {
+        if args::merge_bool(&self.field.args.slice, &self.struct_args.slice).unwrap_or_default() {
             if self.field.ty.slice_inner_ty().is_some() {
                 return true;
             }
@@ -65,7 +65,8 @@ impl Context<'_> {
     }
 
     pub fn is_mut_slice(&self) -> bool {
-        if args::merge(&self.field.args.mut_slice, &self.struct_args.mut_slice).unwrap_or_default()
+        if args::merge_bool(&self.field.args.mut_slice, &self.struct_args.mut_slice)
+            .unwrap_or_default()
         {
             if self.field.ty.slice_inner_ty().is_some() {
                 return true;

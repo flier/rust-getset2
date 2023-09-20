@@ -4,7 +4,7 @@ use syn::Visibility;
 
 use crate::{args, field::Field as BaseField};
 
-use super::{Field, FieldArgs, Setter, StructArgs};
+use super::{Field, FieldArgs, IntoSetter, Setter, StructArgs};
 
 #[derive(Clone, Debug)]
 pub struct Context<'a> {
@@ -41,6 +41,10 @@ impl<'a> ToTokens for Context<'a> {
             return;
         }
 
-        Setter::new(self).to_tokens(tokens)
+        if self.is_into() {
+            IntoSetter::new(self).to_tokens(tokens)
+        } else {
+            Setter::new(self).to_tokens(tokens)
+        }
     }
 }

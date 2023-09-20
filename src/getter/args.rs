@@ -2,7 +2,7 @@ use merge::Merge;
 use structmeta::{Flag, NameArgs, NameValue, StructMeta};
 use syn::{Ident, LitBool, LitStr, Path, Type};
 
-use crate::vis::Restricted;
+use crate::{args::merge_flag, vis::Restricted};
 
 #[derive(Clone, Debug, Default, Merge, StructMeta)]
 pub struct StructArgs {
@@ -57,10 +57,4 @@ pub struct FieldArgs {
     pub rename: Option<NameArgs<Ident>>,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,
-}
-
-fn merge_flag(lhs: &mut Flag, rhs: Flag) {
-    if rhs.span.is_some() {
-        lhs.span = rhs.span
-    }
 }

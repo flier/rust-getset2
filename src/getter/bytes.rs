@@ -23,7 +23,7 @@ impl BytesGetter {
 
 impl Context<'_> {
     pub fn is_bytes(&self) -> bool {
-        args::merge(&self.field.args.bytes, &self.struct_args.bytes).unwrap_or_default()
+        args::merge_bool(&self.field.args.bytes, &self.struct_args.bytes).unwrap_or_default()
     }
 
     pub fn as_bytes(&self) -> Block {

@@ -79,3 +79,17 @@ fn test_unnamed_struct() {
     assert_eq!(unnamed.set_x(123).x(), 123);
     assert_eq!(unnamed.set_arg1(456).arg1(), 456);
 }
+
+#[test]
+fn test_into_setter() {
+    #[derive(Default, Getter, Setter)]
+    pub struct Foo {
+        #[get(str)]
+        #[set(into)]
+        into_field: String,
+    }
+
+    let mut foo = Foo::default();
+
+    assert_eq!(foo.set_into_field("bar").into_field(), "bar");
+}

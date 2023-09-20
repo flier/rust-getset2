@@ -34,6 +34,6 @@ impl CopyGetter {
 
 impl Context<'_> {
     pub fn is_copyable(&self) -> bool {
-        args::merge(&self.field.args.copy, &self.struct_args.copy).unwrap_or_default()
+        args::merge_bool(&self.field.args.copy, &self.struct_args.copy).unwrap_or_default()
     }
 }

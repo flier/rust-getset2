@@ -71,7 +71,7 @@ pub trait OptionExt {
 
 impl OptionExt for Context<'_> {
     fn is_option(&self) -> bool {
-        if args::merge(&self.field.args.opt, &self.struct_args.opt).unwrap_or_default() {
+        if args::merge_bool(&self.field.args.opt, &self.struct_args.opt).unwrap_or_default() {
             if self.field.ty.option_inner_ty().is_some() {
                 return true;
             }

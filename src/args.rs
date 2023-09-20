@@ -45,12 +45,18 @@ impl AsBool for Option<NameArgs<Type>> {
     }
 }
 
-pub fn merge<L, R>(lhs: &L, rhs: &R) -> Option<bool>
+pub fn merge_bool<L, R>(lhs: &L, rhs: &R) -> Option<bool>
 where
     L: AsBool,
     R: AsBool,
 {
     lhs.as_bool().or(rhs.as_bool())
+}
+
+pub fn merge_flag(lhs: &mut Flag, rhs: Flag) {
+    if rhs.span.is_some() {
+        lhs.span = rhs.span
+    }
 }
 
 pub fn extract<I, T>(attrs: I, name: &str) -> (T, Vec<Attribute>)
@@ -104,7 +110,7 @@ pub fn constness(
     field_constness: &Option<NameArgs<Option<LitBool>>>,
     struct_constness: &Flag,
 ) -> Option<Token![const]> {
-    if merge(field_constness, struct_constness).unwrap_or_default() {
+    if merge_bool(field_constness, struct_constness).unwrap_or_default() {
         Some(parse_quote! { const })
     } else {
         None

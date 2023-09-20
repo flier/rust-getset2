@@ -36,7 +36,7 @@ impl MutStrGetter {
 
 impl Context<'_> {
     pub fn is_str(&self) -> bool {
-        if args::merge(&self.field.args.str, &self.struct_args.str).unwrap_or_default() {
+        if args::merge_bool(&self.field.args.str, &self.struct_args.str).unwrap_or_default() {
             if self.field.ty.is_string() {
                 return true;
             }
@@ -53,7 +53,8 @@ impl Context<'_> {
     }
 
     pub fn is_mut_str(&self) -> bool {
-        if args::merge(&self.field.args.mut_str, &self.struct_args.mut_str).unwrap_or_default() {
+        if args::merge_bool(&self.field.args.mut_str, &self.struct_args.mut_str).unwrap_or_default()
+        {
             if self.field.ty.is_string() {
                 return true;
             }

@@ -26,6 +26,6 @@ impl CloneGetter {
 
 impl Context<'_> {
     pub fn is_cloneable(&self) -> bool {
-        args::merge(&self.field.args.clone, &self.struct_args.clone).unwrap_or_default()
+        args::merge_bool(&self.field.args.clone, &self.struct_args.clone).unwrap_or_default()
     }
 }
