@@ -17,6 +17,12 @@ pub trait AsBool {
     }
 }
 
+impl AsBool for Option<bool> {
+    fn as_bool(&self) -> Option<bool> {
+        self.clone()
+    }
+}
+
 impl AsBool for Flag {
     fn as_bool(&self) -> Option<bool> {
         self.span.map(|_| true)

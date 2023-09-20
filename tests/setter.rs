@@ -130,6 +130,9 @@ fn test_set_extend() {
         #[set(extend(&'a Path))]
         path_field: PathBuf,
 
+        #[set(extend(P: AsRef<Path>))]
+        p_field: PathBuf,
+
         #[get(skip)]
         #[set(skip)]
         phantom: std::marker::PhantomData<&'a u8>,
@@ -166,6 +169,13 @@ fn test_set_extend() {
         foo.extend_path_field([Path::new("/"), Path::new("foo")])
             .append_path_field(Path::new("bar"))
             .path_field(),
+        Path::new("/foo/bar")
+    );
+
+    assert_eq!(
+        foo.extend_p_field(["/", "foo"])
+            .append_p_field("bar")
+            .p_field(),
         Path::new("/foo/bar")
     )
 }

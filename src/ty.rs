@@ -54,7 +54,7 @@ impl TypeExt for Type {
 }
 
 fn inner_ty<'a>(ty: &'a Type, name: &'a str) -> Option<&'a Type> {
-    generic_args_ty(ty, Some(name)).and_then(|args| args.into_iter().next())
+    generic_args_ty(ty, [name]).and_then(|args| args.into_iter().next())
 }
 
 fn array_elem_ty(ty: &Type) -> Option<&Type> {
