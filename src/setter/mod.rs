@@ -4,6 +4,7 @@ mod expand;
 mod field;
 mod gen;
 mod into;
+mod option;
 
 pub use self::args::{FieldArgs, StructArgs};
 pub use self::context::Context;

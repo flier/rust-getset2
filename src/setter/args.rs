@@ -10,6 +10,8 @@ pub struct StructArgs {
     pub vis: Option<NameArgs<Option<Restricted>>>,
     #[merge(strategy = merge_flag)]
     pub into: Flag,
+    #[merge(strategy = merge_flag)]
+    pub opt: Flag,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,
 }
@@ -21,6 +23,7 @@ pub struct FieldArgs {
     #[merge(strategy = merge::bool::overwrite_false)]
     pub skip: bool,
     pub into: Option<NameArgs<Option<LitBool>>>,
+    pub opt: Option<NameArgs<Option<LitBool>>>,
     pub rename: Option<NameArgs<Ident>>,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,

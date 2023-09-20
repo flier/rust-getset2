@@ -1,0 +1,5 @@
+error: #[set(opt)] should be applied to an `Option<T>` type
+ --> tests/compile_error/set_opt.rs:6:12
+  |
+6 |     field: usize,
+  |            ^^^^^

@@ -93,3 +93,16 @@ fn test_set_into() {
 
     assert_eq!(foo.set_into_field("bar").into_field(), "bar");
 }
+
+#[test]
+fn test_set_opt() {
+    #[derive(Default, Getter, Setter)]
+    pub struct Foo {
+        #[set(opt)]
+        option_field: Option<usize>,
+    }
+
+    let mut foo = Foo::default();
+
+    assert_eq!(foo.set_option_field(123).option_field().unwrap(), 123);
+}

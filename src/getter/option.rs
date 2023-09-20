@@ -62,7 +62,7 @@ impl Context<'_> {
             if self.field.args.opt.bool() {
                 abort!(
                     self.field.ty.span(),
-                    "#[get(opt)] should be applied to an Option type"
+                    "#[get(opt)] should be applied to an `Option<T>` type"
                 );
             }
         }
@@ -74,7 +74,7 @@ impl Context<'_> {
         match self.field.ty.option_inner_ty() {
             Some(ty) => ty,
             None => {
-                abort!(self.field.ty.span(), "field should be an `Option` type");
+                abort!(self.field.ty.span(), "field should be an `Option<T>` type");
             }
         }
     }
