@@ -4,82 +4,99 @@ use syn::{
 };
 
 pub trait TypeExt {
+    fn is_ty(&self, name: &str) -> bool;
+
+    fn is_ref_ty(&self, name: &str) -> bool;
+
     fn is_string(&self) -> bool;
 
     fn is_str(&self) -> bool;
 
-    fn option_inner_ty(&self) -> Option<Type>;
+    fn option_inner_ty(&self) -> Option<&Type>;
 
-    fn slice_inner_ty(&self) -> Option<Type>;
+    fn slice_inner_ty(&self) -> Option<&Type>;
 }
 
 impl TypeExt for Type {
+    fn is_ty(&self, name: &str) -> bool {
+        matches!(self,
+            Type::Path(TypePath {
+                ref qself,
+                ref path,
+            }) if qself.is_none()
+                && path
+                    .segments
+                    .last()
+                    .map(|s| s.ident == name)
+                    .unwrap_or_default())
+    }
+
+    fn is_ref_ty(&self, name: &str) -> bool {
+        matches!(self,
+           Type::Reference(TypeReference { ref elem, .. }) if elem.as_ref().is_ty(name))
+    }
+
     fn is_string(&self) -> bool {
-        is_ty(self, "String")
+        self.is_ty("String")
     }
 
     fn is_str(&self) -> bool {
-        is_ref_ty(self, "str")
+        self.is_ref_ty("str")
     }
 
-    fn option_inner_ty(&self) -> Option<Type> {
+    fn option_inner_ty(&self) -> Option<&Type> {
         inner_ty(self, "Option")
     }
 
-    fn slice_inner_ty(&self) -> Option<Type> {
+    fn slice_inner_ty(&self) -> Option<&Type> {
         inner_ty(self, "Vec").or(array_elem_ty(self))
     }
 }
 
-fn is_ty(ty: &Type, name: &str) -> bool {
-    matches!(ty,
-        Type::Path(TypePath {
-            ref qself,
-            ref path,
-        }) if qself.is_none()
-            && path
-                .segments
-                .last()
-                .map(|s| s.ident == name)
-                .unwrap_or_default())
+fn inner_ty<'a>(ty: &'a Type, name: &'a str) -> Option<&'a Type> {
+    generic_args_ty(ty, Some(name)).and_then(|args| args.into_iter().next())
 }
 
-fn is_ref_ty(ty: &Type, name: &str) -> bool {
-    matches!(ty,
-        Type::Reference(TypeReference { ref elem, .. }) if is_ty(elem.as_ref(), name))
-}
-
-fn inner_ty(ty: &Type, name: &str) -> Option<Type> {
-    match ty {
-        Type::Path(TypePath {
-            ref qself,
-            ref path,
-        }) if qself.is_none()
-            && path
-                .segments
-                .last()
-                .map(|s| s.ident == name)
-                .unwrap_or_default() =>
-        {
-            match path.segments.last().cloned().unwrap().arguments {
-                PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. })
-                    if args.len() == 1 =>
-                {
-                    match args.first() {
-                        Some(GenericArgument::Type(ty)) => Some(ty.clone()),
-                        _ => None,
-                    }
-                }
-                _ => None,
-            }
-        }
-        _ => None,
+fn array_elem_ty(ty: &Type) -> Option<&Type> {
+    if let Type::Array(TypeArray { ref elem, .. }) = ty {
+        Some(elem.as_ref())
+    } else {
+        None
     }
 }
 
-fn array_elem_ty(ty: &Type) -> Option<Type> {
+pub fn generic_args_ty<'a, I: IntoIterator<Item = &'a str>>(
+    ty: &'a Type,
+    names: I,
+) -> Option<Vec<&'a Type>> {
     match ty {
-        Type::Array(TypeArray { ref elem, .. }) => Some(elem.as_ref().clone()),
+        Type::Path(TypePath {
+            ref qself,
+            ref path,
+        }) if qself.is_none()
+            && path
+                .segments
+                .last()
+                .map(|s| names.into_iter().any(|name| s.ident == name))
+                .unwrap_or_default() =>
+        {
+            match path.segments.last().as_ref().unwrap().arguments {
+                PathArguments::AngleBracketed(AngleBracketedGenericArguments {
+                    ref args, ..
+                }) => Some(
+                    args.into_iter()
+                        .flat_map(|arg| {
+                            if let GenericArgument::Type(ty) = arg {
+                                Some(ty)
+                            } else {
+                                None
+                            }
+                        })
+                        .collect(),
+                ),
+                _ => None,
+            }
+        }
         _ => None,
     }
 }

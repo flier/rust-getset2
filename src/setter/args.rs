@@ -1,6 +1,6 @@
 use merge::Merge;
 use structmeta::{Flag, NameArgs, NameValue, StructMeta};
-use syn::{Ident, LitBool, LitStr};
+use syn::{Ident, LitBool, LitStr, Type};
 
 use crate::{args::merge_flag, vis::Restricted};
 
@@ -12,6 +12,8 @@ pub struct StructArgs {
     pub into: Flag,
     #[merge(strategy = merge_flag)]
     pub opt: Flag,
+    #[merge(strategy = merge_flag)]
+    pub extend: Flag,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,
 }
@@ -24,6 +26,7 @@ pub struct FieldArgs {
     pub skip: bool,
     pub into: Option<NameArgs<Option<LitBool>>>,
     pub opt: Option<NameArgs<Option<LitBool>>>,
+    pub extend: Option<NameArgs<Option<Type>>>,
     pub rename: Option<NameArgs<Ident>>,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,

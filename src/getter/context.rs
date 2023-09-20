@@ -30,12 +30,12 @@ impl<'a> Context<'a> {
         args::constness(&self.field.args.constness, &self.struct_args.constness)
     }
 
-    pub fn prefix(&self) -> Option<String> {
-        args::prefix(&self.field.args.prefix, &self.struct_args.prefix)
+    pub fn prefix(&self) -> String {
+        args::prefix(&self.field.args.prefix, &self.struct_args.prefix).unwrap_or_default()
     }
 
-    pub fn suffix(&self) -> Option<String> {
-        args::suffix(&self.field.args.suffix, &self.struct_args.suffix)
+    pub fn suffix(&self) -> String {
+        args::suffix(&self.field.args.suffix, &self.struct_args.suffix).unwrap_or_default()
     }
 }
 

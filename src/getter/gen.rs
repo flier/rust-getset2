@@ -9,10 +9,8 @@ pub fn getter(ctx: &Context) -> ItemFn {
     let attrs = &ctx.field.attrs;
     let vis = ctx.vis();
     let constness = ctx.constness();
-    let prefix = ctx.prefix().unwrap_or_default();
     let basename = ctx.field.basename().to_string();
-    let suffix = ctx.suffix().unwrap_or_default();
-    let method_name = format_ident!("{}{}{}", prefix, basename, suffix);
+    let method_name = format_ident!("{}{}{}", ctx.prefix(), basename, ctx.suffix());
     let ty = &ctx.field.ty;
     let field_name = ctx.field.name();
 
@@ -27,10 +25,8 @@ pub fn getter(ctx: &Context) -> ItemFn {
 pub fn mut_getter(ctx: &Context) -> ItemFn {
     let attrs = &ctx.field.attrs;
     let vis = ctx.vis();
-    let prefix = ctx.prefix().unwrap_or_default();
     let basename = ctx.field.basename().to_string();
-    let suffix = ctx.suffix().unwrap_or_default();
-    let method_name = format_ident!("{}{}{}_mut", prefix, basename, suffix);
+    let method_name = format_ident!("{}{}{}_mut", ctx.prefix(), basename, ctx.suffix());
     let ty = ctx.field.ty.clone();
     let field_name = ctx.field.name();
 

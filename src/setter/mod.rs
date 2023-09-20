@@ -1,6 +1,7 @@
 mod args;
 mod context;
 mod expand;
+mod extend;
 mod field;
 mod gen;
 mod into;

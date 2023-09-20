@@ -108,7 +108,7 @@ impl Context<'_> {
         false
     }
 
-    fn slice_inner_ty(&self) -> Type {
+    fn slice_inner_ty(&self) -> &Type {
         match self.field.ty.slice_inner_ty() {
             Some(ty) => ty,
             None => {

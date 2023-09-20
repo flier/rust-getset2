@@ -8,10 +8,8 @@ use super::Context;
 pub fn setter(ctx: &Context) -> ItemFn {
     let attrs = &ctx.field.attrs;
     let vis = ctx.vis();
-    let prefix = ctx.prefix().unwrap_or_else(|| "set_".to_string());
     let basename = ctx.field.basename().to_string();
-    let suffix = ctx.suffix().unwrap_or_default();
-    let method_name = format_ident!("{}{}{}", prefix, basename, suffix);
+    let method_name = format_ident!("{}{}{}", ctx.prefix(), basename, ctx.suffix());
     let ty = ctx.field.ty.clone();
     let field_name = ctx.field.name();
     let arg_name = ctx.field.basename();

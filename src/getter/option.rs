@@ -70,7 +70,7 @@ impl Context<'_> {
         false
     }
 
-    pub fn option_inner_ty(&self) -> Type {
+    pub fn option_inner_ty(&self) -> &Type {
         match self.field.ty.option_inner_ty() {
             Some(ty) => ty,
             None => {

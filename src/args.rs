@@ -39,6 +39,12 @@ impl AsBool for Option<NameArgs<Option<Path>>> {
     }
 }
 
+impl AsBool for Option<NameArgs<Option<Type>>> {
+    fn as_bool(&self) -> Option<bool> {
+        self.as_ref().map(|_| true)
+    }
+}
+
 impl AsBool for Option<NameArgs<Type>> {
     fn as_bool(&self) -> Option<bool> {
         self.as_ref().map(|_| true)

@@ -26,12 +26,17 @@ impl<'a> Context<'a> {
         args::vis(&self.field.args.vis, &self.struct_args.vis, &self.field.vis)
     }
 
-    pub fn prefix(&self) -> Option<String> {
-        args::prefix(&self.field.args.prefix, &self.struct_args.prefix)
+    pub fn prefix(&self) -> String {
+        self.with_prefix("set_")
     }
 
-    pub fn suffix(&self) -> Option<String> {
-        args::suffix(&self.field.args.suffix, &self.struct_args.suffix)
+    pub fn with_prefix(&self, default: &str) -> String {
+        args::prefix(&self.field.args.prefix, &self.struct_args.prefix)
+            .unwrap_or_else(|| default.to_string())
+    }
+
+    pub fn suffix(&self) -> String {
+        args::suffix(&self.field.args.suffix, &self.struct_args.suffix).unwrap_or_default()
     }
 }
 
@@ -45,6 +50,8 @@ impl<'a> ToTokens for Context<'a> {
             super::into::setter(self).to_tokens(tokens)
         } else if self.is_option() {
             super::option::setter(self).to_tokens(tokens)
+        } else if self.is_extend() {
+            super::extend::setter(self, tokens)
         } else {
             super::gen::setter(self).to_tokens(tokens)
         }
