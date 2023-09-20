@@ -4,7 +4,10 @@ Derive `Setter` to generate the trivial setters base on the fields in a structur
 - [Helper attributes](#helper-attributes)
   - [Visibility](#visibility): `pub` attribute
   - [Naming](#naming): `prefix`, `suffix` and `rename` attributes
+  - [Generic Setters](#generic-setters): `into` and `try_into` attribute
+  - [Extend Collection](#extend-collection): `extend` attribute
   - [Pass-through Attribute](#pass-through-attribute): `attr` attribute
+  - [Hidden Fields](#hidden-fields): `skip` attribute
 
 # Example
 
@@ -13,12 +16,15 @@ Derive `Setter` to generate the trivial setters base on the fields in a structur
 
 | attribute | struct | field | description |
 | --------- | ------ | ----- | ----------- |
-| [attr(...)](#pass-through-attribute) | | ✔ | Set attributes on the setter |
-| [attrs(...)](#pass-through-attribute) | ✔ | | Add attributes to passthrough allow list |
+| [attr(...)](#setattr) | | ✔ | Set attributes on the setter |
+| [attrs(...)](#setattrs) | ✔ | | Add attributes to passthrough allow list |
+| [into](#setinto) | ✔ | ✔ | Generating generic setter over the `Into` trait. |
 | [prefix = "..."](#naming) | ✔ | ✔ | Prepend a `prefix` to the setter name |
 | [pub(...)](#visibility) | ✔ | ✔ | Change the visibility of setter |
 | [rename = "...`](#naming) | | ✔ | Set the setter name |
+| [skip](#hidden-fields) | | ✔ | Skipping generate setter for the field |
 | [suffix = "...`](#naming) | ✔ | ✔ | Append a `suffix` to the setter name |
+| [try_into](#settry_into) | ✔ | ✔ | Generating generic setter over the
 
 ## Visibility
 
@@ -134,6 +140,203 @@ fn main() {
 }
 ```
 
+## Generic Setters
+
+### #[set(into)]
+
+You can make each setter generic over the `Into` trait. It’s as simple as adding #[set(into)] to either a field or the whole structure.
+
+```rust
+use getset2::{Getter, Setter};
+
+#[derive(Default, Getter, Setter)]
+pub struct Foo {
+    #[get(str)]
+    #[set(into)]
+    into_field: String,
+}
+
+let mut foo = Foo::default();
+
+assert_eq!(foo.set_into_field("bar").into_field(), "bar");
+```
+
+The following code will be generated.
+
+```rust,ignore
+impl Foo {
+    #[inline(always)]
+    fn set_into_field<ARG>(&mut self, into_field: ARG) -> &mut Self
+    where
+        ARG: ::std::convert::Into<String>,
+    {
+        self.into_field = ::std::convert::Into::into(into_field);
+        self
+    }
+}
+```
+
+### #[set(try_into)]
+
+Alternatively, you can make each setter generic over the `TryInto` trait.
+
+```rust
+use getset2::{Getter, Setter};
+
+#[derive(Default, Getter, Setter)]
+pub struct Foo {
+    #[get(copy)]
+    #[set(try_into)]
+    try_into_field: i32,
+}
+
+fn main() {
+    let mut foo = Foo::default();
+
+    assert_eq!(foo.set_try_into_field(123).unwrap().try_into_field(), 123);
+}
+```
+
+The following code will be generated.
+
+```rust,ignore
+impl Foo {
+    #[inline(always)]
+    fn set_try_into_field<ARG>(
+        &mut self,
+        try_into_field: ARG,
+    ) -> ::std::result::Result<&mut Self, <ARG as ::std::convert::TryInto<i32>>::Error>
+    where
+        ARG: ::std::convert::TryInto<i32>,
+    {
+        self.try_into_field = ::std::convert::TryInto::<i32>::try_into(try_into_field)?;
+
+        Ok(self)
+    }
+}
+```
+
+## Extend Collection
+
+For collection types that implement the `Extend` trait, you can use `#[set(extend)]` directly to generate a setter that inserts values in bulk with `extend_` prefix, or add value one by one with `append_` prefix.
+
+### #[set(extend)]
+
+```rust
+use std::collections::HashMap;
+
+use getset2::{Getter, Setter};
+
+#[derive(Default, Getter, Setter)]
+pub struct Foo {
+    #[get(str)]
+    #[set(extend)]
+    string_field: String,
+
+    #[get(slice)]
+    #[set(extend)]
+    vec_field: Vec<usize>,
+
+    #[set(extend)]
+    map_field: HashMap<usize, usize>,
+}
+
+fn main() {
+    let mut foo = Foo::default();
+
+    assert_eq!(
+        foo.extend_string_field("foo".chars())
+            .extend_string_field("bar".chars())
+            .append_string_field('!')
+            .string_field(),
+        "foobar!"
+    );
+
+    assert_eq!(
+        foo.extend_vec_field([1, 2, 3])
+            .extend_vec_field([4, 5, 6])
+            .append_vec_field(7)
+            .vec_field(),
+        [1, 2, 3, 4, 5, 6, 7]
+    );
+
+    assert_eq!(
+        foo.extend_map_field(vec![(1, 2), (3, 4)])
+            .append_map_field((5, 6))
+            .map_field()
+            .get(&5)
+            .unwrap(),
+        &6
+    );
+
+}
+```
+
+Value types are automatically recognized if the collection type is one of the following:
+- BinaryHeap
+- BTreeMap
+- BTreeSet
+- HashMap
+- HashSet
+- LinkedList
+- String
+- Vec
+- VecDeque
+
+Otherwise you need to explicitly specify in the `extend` attribute, like `#[set(extend(&'a Path))]`.
+
+```rust
+use std::path::{Path, PathBuf};
+
+use getset2::{Getter, Setter};
+
+#[derive(Default, Getter, Setter)]
+pub struct Foo<'a> {
+    #[set(extend(&'a Path))]
+    path_field: PathBuf,
+
+    #[get(skip)]
+    #[set(skip)]
+    phantom: std::marker::PhantomData<&'a u8>,
+}
+
+fn main() {
+    let mut foo = Foo::default();
+
+    assert_eq!(
+        foo.extend_path_field([Path::new("/"), Path::new("foo")])
+            .append_path_field(Path::new("bar"))
+            .path_field(),
+        Path::new("/foo/bar")
+    );
+}
+```
+
+The `extend` attribute also supports defining value type in a generic way, like `#[set(extend(P: AsRef<Path>))]`.
+
+```rust
+use std::path::{Path, PathBuf};
+
+use getset2::{Getter, Setter};
+
+#[derive(Default, Getter, Setter)]
+pub struct Foo {
+    #[set(extend(P: AsRef<Path>))]
+    path_field: PathBuf,
+}
+
+fn main() {
+    let mut foo = Foo::default();
+
+    assert_eq!(
+        foo.extend_path_field(["/", "foo"])
+            .append_path_field("bar")
+            .path_field(),
+        Path::new("/foo/bar")
+    );
+}
+```
+
 ## Pass-through Attribute
 
 `#[derive(Setter)]` automatic copies doc comments and  well-known attributes `#[...]` from your fields to the according setter methods, if it is one of the following:
@@ -143,6 +346,8 @@ fn main() {
 - `#[allow(...)]`, `#[deny(...)]`, `#[forbid(...)]` or `#[warn(...)]` — Alters the default lint level.
 - `#[deprecated(...)]` — Generates deprecation notices.
 - `#[must_use]` — Generates a lint for unused values.
+
+### #[set(attr(...))]
 
 In addition to that you can set attributes on setter using the `#[set(attr(...))]` attributes:
 
@@ -174,6 +379,8 @@ The following code will be generated.
 }
 ```
 
+### #[set(attrs(...))]
+
 You can also mark the name of the attribute to be passthrough directly on struct with `#[set(attrs(...))]` attribute.
 
 ```rust
@@ -189,3 +396,23 @@ struct Foo {
     bar: usize,
 }
 ```
+
+## Hidden Fields
+
+### #[set(skip)]
+
+You can hide fields by skipping their setters.
+
+```rust
+use getset2::{Getter, Setter};
+
+#[derive(Getter, Setter)]
+struct HiddenField {
+    setter_present: u32,
+    #[get(skip)]
+    #[set(skip)]
+    setter_skipped: u32,
+}
+```
+
+The generation of skip getters and setters is set independently.
