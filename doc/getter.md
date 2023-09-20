@@ -8,6 +8,7 @@ Derive `Getter` to generate the trivial getters base on the fields in a structur
   - [Naming](#naming): `prefix`, `suffix` and `rename` attributes
   - [Result Type](#result-type): `clone`, `copy` attributes
   - [Pass-through Attribute](#pass-through-attribute): `attr` attribute
+  - [Hidden Fields](#hidden-fields): `skip` attribute
 
 # Example
 
@@ -16,15 +17,16 @@ Derive `Getter` to generate the trivial getters base on the fields in a structur
 
 | attribute | struct | field | description |
 | --------- | ------ | ----- | ----------- |
-| [attr(...)](#pass-through-attribute) | | ✔ | Set attributes on the getter |
-| [attrs(...)](#pass-through-attribute) | ✔ | | Add attributes to passthrough allow list |
+| [attr(...)](#getattr) | | ✔ | Set attributes on the getter |
+| [attrs(...)](#getattrs) | ✔ | | Add attributes to passthrough allow list |
 | [clone](#result-type) | ✔ | ✔ | Return a `cloned` value |
-| [const](#constness) | ✔ | ✔ | A `const` function is permitted to call from a const context |
+| [const](#getconst) | ✔ | ✔ | A `const` function is permitted to call from a const context |
 | [copy](#result-type) | ✔ | ✔ | Return a `copied` value |
-| [mut](#mutable) | ✔ | ✔ | Generating mutable getter |
+| [mut](#getmut) | ✔ | ✔ | Generating mutable getter |
 | [prefix = "..."](#naming) | ✔ | ✔ | Prepend a `prefix` to the getter name |
 | [pub(...)](#visibility) | ✔ | ✔ | Change the visibility of getter |
 | [rename = "..."](#naming) | | ✔ | Set the getter name |
+| [skip](#getskip) | | ✔ | Skipping generate getter for the field |
 | [suffix = "..."](#naming) | ✔ | ✔ | Append a `suffix` to the getter name |
 
 ## Visibility
@@ -105,6 +107,8 @@ fn main() {
 
 ## Mutable
 
+### #[get(mut)]
+
 Use the `mut` attribute can generate mutable getter base on the field.
 
 ```rust
@@ -147,6 +151,9 @@ The `mut` version of the `getter` automatically takes the `_mut` suffix, and ret
 ## Constness
 
 A `const fn` is a function that one is permitted to call from a const context.
+
+### #[get(const)]
+
 Most trivial getters can be set to `const fn`, and the function is interpreted by the compiler at compile time.
 
 ```rust
@@ -280,6 +287,8 @@ fn main() {
 - `#[deprecated(...)]` — Generates deprecation notices.
 - `#[must_use]` — Generates a lint for unused values.
 
+### #[get(attr(...))]
+
 In addition to that you can set attributes on getter using the `#[get(attr(...))]` attributes:
 
 ```rust
@@ -309,6 +318,8 @@ impl Foo {
 }
 ```
 
+### #[get(attrs(...))]
+
 You can also mark the name of the attribute to be passthrough directly on struct with `#[get(attrs(...))]` attribute.
 
 ```rust
@@ -321,5 +332,22 @@ struct Foo {
     #[rustfmt::skip]
     #[clippy::cyclomatic_complexity = "100"]
     bar: usize,
+}
+```
+
+## Hidden Fields
+
+### #[get(skip)]
+
+You can hide fields by skipping their getters.
+
+```rust
+use getset2::Getter;
+
+#[derive(Getter)]
+struct HiddenField {
+    setter_present: u32,
+    #[get(skip)]
+    setter_skipped: u32,
 }
 ```
