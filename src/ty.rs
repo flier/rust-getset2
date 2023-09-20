@@ -65,10 +65,10 @@ fn array_elem_ty(ty: &Type) -> Option<&Type> {
     }
 }
 
-pub fn generic_args_ty<'a, I: IntoIterator<Item = S>, S: AsRef<str>>(
-    ty: &'a Type,
+pub fn generic_args_ty<I: IntoIterator<Item = S>, S: AsRef<str>>(
+    ty: &Type,
     names: I,
-) -> Option<Vec<&'a Type>> {
+) -> Option<Vec<&Type>> {
     match ty {
         Type::Path(TypePath {
             ref qself,
