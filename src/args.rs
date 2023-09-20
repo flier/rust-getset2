@@ -98,14 +98,20 @@ pub fn extract<T, I>(
 ) -> (T, Option<Span>, Vec<Attribute>)
 where
     I: IntoIterator<Item = Attribute>,
-    T: Default + Parse + Merge,
+    T: Default + Merge + Parse,
 {
     let (args, attrs): (Vec<_>, Vec<_>) = attrs
         .into_iter()
         .partition(|attr| attr.path().is_ident(name));
 
-    let (args, span) = args
-        .into_iter()
+    let (args, span) = parse_args(args, name);
+    let attrs = extract_attrs(attrs, allowed_attrs);
+
+    (args, span, attrs)
+}
+
+fn parse_args<T: Default + Merge + Parse>(args: Vec<Attribute>, name: &str) -> (T, Option<Span>) {
+    args.into_iter()
         .map(|attr| match attr.parse_args::<T>() {
             Ok(args) => (args, attr.span()),
             Err(err) => {
@@ -125,26 +131,22 @@ where
                     },
                 )
             },
-        );
+        )
+}
 
-    let all_allowed_attrs = allowed_attrs
-        .unwrap_or_default()
-        .iter()
-        .cloned()
-        .chain(WELL_KNOWN_ATTRS.iter().map(|&s| s.to_string()))
-        .collect::<Vec<_>>();
-
-    let attrs = attrs
+fn extract_attrs(attrs: Vec<Attribute>, allowed_attrs: Option<Vec<String>>) -> Vec<Attribute> {
+    attrs
         .into_iter()
         .filter(|attr| {
-            attr.style == AttrStyle::Outer
-                && all_allowed_attrs
-                    .iter()
-                    .any(|name| attr.path().segments.first().unwrap().ident == name)
-        })
-        .collect::<Vec<_>>();
+            let ident = &attr.path().segments.first().unwrap().ident;
 
-    (args, span, attrs)
+            attr.style == AttrStyle::Outer
+                && (WELL_KNOWN_ATTRS.iter().any(|name| ident == name)
+                    || allowed_attrs
+                        .as_ref()
+                        .map_or(false, |attrs| attrs.iter().any(|name| ident == name)))
+        })
+        .collect::<Vec<_>>()
 }
 
 pub fn vis(

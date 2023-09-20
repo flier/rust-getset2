@@ -65,7 +65,7 @@ fn array_elem_ty(ty: &Type) -> Option<&Type> {
     }
 }
 
-pub fn generic_args_ty<'a, I: IntoIterator<Item = &'a str>>(
+pub fn generic_args_ty<'a, I: IntoIterator<Item = S>, S: AsRef<str>>(
     ty: &'a Type,
     names: I,
 ) -> Option<Vec<&'a Type>> {

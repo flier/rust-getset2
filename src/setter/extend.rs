@@ -74,6 +74,17 @@ pub fn setter(ctx: &Context, tokens: &mut TokenStream) {
     })
 }
 
+const WELL_KNOWN_SEQ: &[&str] = &[
+    "BinaryHeap",
+    "BTreeSet",
+    "HashSet",
+    "LinkedList",
+    "Vec",
+    "VecDeque",
+];
+
+const WELL_KNOWN_MAP: &[&str] = &["HashMap", "BTreeMap"];
+
 impl Context<'_> {
     pub fn is_extend(&self) -> bool {
         self.field.args.extend.is_some()
@@ -84,21 +95,11 @@ impl Context<'_> {
 
         if ty.is_string() {
             return parse_quote! { char };
-        } else if let Some(args) = ty::generic_args_ty(
-            ty,
-            [
-                "BinaryHeap",
-                "BTreeSet",
-                "HashSet",
-                "LinkedList",
-                "Vec",
-                "VecDeque",
-            ],
-        ) {
+        } else if let Some(args) = ty::generic_args_ty(ty, WELL_KNOWN_SEQ) {
             if let Some(ty) = args.into_iter().next() {
                 return ty.clone();
             }
-        } else if let Some(args) = ty::generic_args_ty(ty, ["HashMap", "BTreeMap"]) {
+        } else if let Some(args) = ty::generic_args_ty(ty, WELL_KNOWN_MAP) {
             let mut iter = args.into_iter();
 
             if let Some((key_ty, value_ty)) = iter.next().zip(iter.next()) {
