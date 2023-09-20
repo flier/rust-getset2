@@ -133,5 +133,5 @@ jobs:
       run: cargo test --verbose
 
     - name: run compile error tests
-      continue-on-error: ${{ matrix.rust == 'nightly' }}
+      continue-on-error: ${{ matrix.rust != 'stable' }}
       run: cargo test --features compile_error
