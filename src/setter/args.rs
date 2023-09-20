@@ -17,8 +17,6 @@ pub struct StructArgs {
     pub try_into: Flag,
     #[merge(strategy = merge_flag)]
     pub opt: Flag,
-    #[merge(strategy = merge_flag)]
-    pub extend: Flag,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,
 }

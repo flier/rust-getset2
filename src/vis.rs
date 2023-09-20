@@ -65,7 +65,7 @@ impl Parse for Restricted {
                 path: input.parse()?,
             })
         } else {
-            Err(lookahead.error())
+            Err(input.error(format!("for the `pub` attribute, {}", lookahead.error())))
         }
     }
 }

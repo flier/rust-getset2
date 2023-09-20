@@ -1,0 +1,14 @@
+error[E0277]: the trait bound `f32: From<i32>` is not satisfied
+  --> tests/compile_error/set_try_into.rs:12:7
+   |
+12 |     s.set_field(123).unwrap();
+   |       ^^^^^^^^^ the trait `From<i32>` is not implemented for `f32`
+   |
+   = help: the following other types implement trait `From<T>`:
+             <f32 as From<bool>>
+             <f32 as From<i8>>
+             <f32 as From<i16>>
+             <f32 as From<u8>>
+             <f32 as From<u16>>
+   = note: required for `i32` to implement `Into<f32>`
+   = note: required for `f32` to implement `TryFrom<i32>`

@@ -1,6 +1,6 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
-use syn::Visibility;
+use syn::{spanned::Spanned, Visibility};
 
 use crate::{args, field::Field as BaseField};
 
@@ -9,17 +9,32 @@ use super::{Field, FieldArgs, StructArgs};
 #[derive(Clone, Debug)]
 pub struct Context<'a> {
     pub struct_args: &'a StructArgs,
+    pub struct_args_span: Option<Span>,
     pub field: Field,
 }
 
 impl<'a> Context<'a> {
-    pub fn new(struct_args: &'a StructArgs, field: BaseField) -> Self {
-        let (field_args, field_attrs): (FieldArgs, _) = args::extract(field.attrs.clone(), "set");
+    pub fn new(
+        struct_args: &'a StructArgs,
+        struct_args_span: Option<Span>,
+        field: BaseField,
+    ) -> Self {
+        let (field_args, field_args_span, field_attrs) =
+            args::extract::<FieldArgs, _>(field.attrs.clone(), "set");
 
         Self {
             struct_args,
-            field: Field::new(field, field_args, field_attrs),
+            struct_args_span,
+            field: Field::new(field, field_args, field_args_span, field_attrs),
         }
+    }
+
+    #[allow(dead_code)]
+    pub fn attr_span(&self) -> Span {
+        self.field
+            .args_span
+            .or(self.struct_args_span)
+            .unwrap_or(self.field.span())
     }
 
     pub fn vis(&self) -> Visibility {

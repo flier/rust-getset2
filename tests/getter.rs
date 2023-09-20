@@ -2,6 +2,8 @@ use std::{
     collections::HashMap,
     ffi::{CStr, CString, OsStr, OsString},
     path::{Path, PathBuf},
+    rc::Rc,
+    sync::Arc,
 };
 
 use getset2::Getter;
@@ -242,32 +244,99 @@ fn test_get_bytes() {
 fn test_get_borrow() {
     #[derive(Default, Getter)]
     struct Foo {
-        #[get(borrow(Path), mut)]
+        #[get(borrow(str))]
+        str_field: String,
+
+        #[get(borrow(CStr))]
+        cstr_field: CString,
+
+        #[get(borrow(OsStr))]
+        os_str_field: OsString,
+
+        #[get(borrow(Path))]
         path_field: PathBuf,
+
+        #[get(borrow(usize))]
+        rc_field: Rc<usize>,
+
+        #[get(borrow(usize))]
+        arc_field: Arc<usize>,
+
+        #[get(borrow(usize))]
+        box_field: Box<usize>,
+
+        #[get(borrow([usize]))]
+        vec_field: Vec<usize>,
+
+        #[get(borrow([u8]))]
+        array_field: [u8; 4],
     }
 
-    let mut foo = Foo::default();
+    let foo = Foo {
+        str_field: "str".to_owned(),
+        cstr_field: CString::new("cstr").unwrap(),
+        os_str_field: OsString::from("os_str"),
+        path_field: PathBuf::from("/tmp"),
+        rc_field: Rc::new(123),
+        arc_field: Arc::new(456),
+        box_field: Box::new(789),
+        vec_field: vec![1, 2, 3, 4],
+        array_field: [1, 2, 3, 4],
+    };
 
-    foo.path_field_mut().push("/tmp");
-
+    assert_eq!(foo.str_field(), "str");
+    assert_eq!(
+        foo.cstr_field(),
+        CStr::from_bytes_with_nul(b"cstr\0").unwrap()
+    );
+    assert_eq!(foo.os_str_field(), OsStr::new("os_str"));
     assert_eq!(foo.path_field(), Path::new("/tmp"));
+    assert_eq!(foo.rc_field(), &123);
+    assert_eq!(foo.arc_field(), &456);
+    assert_eq!(foo.box_field(), &789);
+    assert_eq!(foo.vec_field(), &[1, 2, 3, 4]);
+    assert_eq!(foo.array_field(), &[1, 2, 3, 4]);
 }
 
 #[test]
 fn test_get_borrow_mut() {
     #[derive(Default, Getter)]
     struct Foo {
-        #[get(borrow(OsStr), borrow_mut(OsStr))]
+        #[get(borrow_mut(str))]
+        str_field: String,
+
+        #[get(borrow_mut(OsStr))]
         os_str_field: OsString,
+
+        #[get(borrow(usize), borrow_mut(usize))]
+        box_field: Box<usize>,
+
+        #[get(borrow_mut([usize]))]
+        vec_field: Vec<usize>,
+
+        #[get(borrow_mut([u8]))]
+        array_field: [u8; 4],
     }
 
     let mut foo = Foo {
+        str_field: "str".to_owned(),
         os_str_field: OsString::from("foo"),
+        box_field: Box::new(123),
+        vec_field: vec![1, 2, 3, 4],
+        array_field: [1, 2, 3, 4],
     };
 
+    foo.str_field_mut().make_ascii_uppercase();
     foo.os_str_field_mut().make_ascii_uppercase();
+    *foo.box_field_mut() = 456;
+    foo.vec_field_mut().copy_from_slice(&[5, 6, 7, 8]);
+    foo.array_field_mut().copy_from_slice(&[5, 6, 7, 8]);
 
+    assert_eq!(foo.str_field(), "STR");
     assert_eq!(foo.os_str_field(), OsStr::new("FOO"));
+    assert_eq!(foo.box_field(), &456);
+    assert_eq!(foo.vec_field(), &[5, 6, 7, 8]);
+    assert_eq!(foo.array_field(), &[5, 6, 7, 8]);
 }
 
 #[test]

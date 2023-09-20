@@ -1,4 +1,5 @@
 use merge::Merge;
+use proc_macro2::Span;
 use proc_macro_error::abort;
 use quote::format_ident;
 use structmeta::{Flag, NameArgs, NameValue};
@@ -71,7 +72,7 @@ pub fn merge_flag(lhs: &mut Flag, rhs: Flag) {
     }
 }
 
-pub fn extract<I, T>(attrs: I, name: &str) -> (T, Vec<Attribute>)
+pub fn extract<T, I>(attrs: I, name: &str) -> (T, Option<Span>, Vec<Attribute>)
 where
     I: IntoIterator<Item = Attribute>,
     T: Default + Parse + Merge,
@@ -80,18 +81,28 @@ where
         .into_iter()
         .partition(|attr| attr.path().is_ident(name));
 
-    let args = args
+    let (args, span) = args
         .into_iter()
         .map(|attr| match attr.parse_args::<T>() {
-            Ok(args) => args,
+            Ok(args) => (args, attr.span()),
             Err(err) => {
                 abort!(attr.span(), "invalid #[{}(..)] attribute, {}", name, err);
             }
         })
-        .fold(T::default(), |mut cur, new| {
-            cur.merge(new);
-            cur
-        });
+        .fold(
+            (T::default(), None::<Span>),
+            |(mut cur, span), (new, attr_span)| {
+                cur.merge(new);
+                (
+                    cur,
+                    if let Some(span) = span {
+                        span.join(attr_span)
+                    } else {
+                        Some(attr_span)
+                    },
+                )
+            },
+        );
 
     let attrs = attrs
         .into_iter()
@@ -103,7 +114,7 @@ where
         })
         .collect::<Vec<_>>();
 
-    (args, attrs)
+    (args, span, attrs)
 }
 
 pub fn vis(

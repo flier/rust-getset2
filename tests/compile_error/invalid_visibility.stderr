@@ -1,4 +1,4 @@
-error: invalid #[get(..)] attribute, expected one of: `self`, `super`, `crate`, `in`
+error: invalid #[get(..)] attribute, for the `pub` attribute, expected one of: `self`, `super`, `crate`, `in`
  --> tests/compile_error/invalid_visibility.rs:5:5
   |
 5 |     #[get(pub(other))]

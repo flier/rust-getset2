@@ -1,0 +1,12 @@
+error: #[set(extend)] supports only some of the well-known types,
+       #[set(extend(Item))] should be used for a type which implements the `Extend<Item>` trait
+ --> tests/compile_error/set_extend.rs:8:12
+  |
+8 |     field: usize,
+  |            ^^^^^
+
+error: invalid #[set(..)] attribute, cannot find parameter `extend` in this scope
+  --> tests/compile_error/set_extend.rs:13:1
+   |
+13 | #[set(pub, extend)] // #[set(extend)] can not be applied to the structure
+   | ^

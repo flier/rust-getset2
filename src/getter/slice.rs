@@ -113,7 +113,7 @@ impl Context<'_> {
             Some(ty) => ty,
             None => {
                 abort!(
-                    self.field.span(),
+                    self.field.ty.span(),
                     "field should be `Vec<T>` or an array `[T; N]` type"
                 );
             }

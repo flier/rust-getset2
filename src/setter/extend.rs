@@ -3,10 +3,7 @@ use proc_macro_error::abort;
 use quote::{format_ident, quote_spanned, TokenStreamExt};
 use syn::{parse_quote, spanned::Spanned, Type, TypeParam};
 
-use crate::{
-    args::AsBool,
-    ty::{self, TypeExt},
-};
+use crate::ty::{self, TypeExt};
 
 use super::Context;
 
@@ -79,7 +76,7 @@ pub fn setter(ctx: &Context, tokens: &mut TokenStream) {
 
 impl Context<'_> {
     pub fn is_extend(&self) -> bool {
-        self.field.args.extend.is_some() || self.struct_args.extend.bool()
+        self.field.args.extend.is_some()
     }
 
     pub fn extend_item_ty(&self) -> Type {
@@ -109,6 +106,10 @@ impl Context<'_> {
             }
         }
 
-        abort!(ty.span(), "#[set(extend(..))] should have a Item type")
+        abort!(
+            self.field.ty.span(),
+            "#[set(extend)] supports only some of the well-known types,
+#[set(extend(Item))] should be used for a type which implements the `Extend<Item>` trait"
+        )
     }
 }

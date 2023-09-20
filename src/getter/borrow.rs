@@ -13,7 +13,7 @@ pub fn getter(ctx: &Context) -> ItemFn {
             &arg.args
         } else {
             abort!(
-                ctx.field.span(),
+                ctx.attr_span(),
                 "#[get(borrow(..))] should have a Borrowed type"
             );
         };
@@ -41,7 +41,7 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
             &arg.args
         } else {
             abort!(
-                ctx.field.span(),
+                ctx.attr_span(),
                 "#[get(borrow_mut(..))] should have a Borrowed type"
             );
         };

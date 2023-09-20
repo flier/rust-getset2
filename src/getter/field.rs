@@ -1,4 +1,5 @@
 use derive_more::{Constructor, Deref};
+use proc_macro2::Span;
 use syn::{Attribute, Ident};
 
 use crate::{args, field::Field as BaseField};
@@ -10,6 +11,7 @@ pub struct Field {
     #[deref]
     pub field: BaseField,
     pub args: FieldArgs,
+    pub args_span: Option<Span>,
     pub attrs: Vec<Attribute>,
 }
 

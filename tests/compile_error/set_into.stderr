@@ -1,0 +1,23 @@
+error[E0277]: the trait bound `f32: From<i32>` is not satisfied
+  --> tests/compile_error/set_into.rs:13:28
+   |
+13 |     assert_eq!(s.set_field(123i32).field(), 123.0);
+   |                  --------- ^^^^^^ the trait `From<i32>` is not implemented for `f32`
+   |                  |
+   |                  required by a bound introduced by this call
+   |
+   = help: the following other types implement trait `From<T>`:
+             <f32 as From<bool>>
+             <f32 as From<i8>>
+             <f32 as From<i16>>
+             <f32 as From<u8>>
+             <f32 as From<u16>>
+   = note: required for `i32` to implement `Into<f32>`
+note: required by a bound in `Struct::set_field`
+  --> tests/compile_error/set_into.rs:5:5
+   |
+3  | #[derive(Getter, Setter)]
+   |                  ------ required by a bound in this associated function
+4  | pub struct Struct {
+5  |     #[get(pub, copy)]
+   |     ^ required by this bound in `Struct::set_field`

@@ -16,7 +16,7 @@ pub fn expand(input: DeriveInput) -> TokenStream {
         ..
     } = input.clone();
 
-    let (struct_args, _): (StructArgs, _) = args::extract(attrs, "get");
+    let (struct_args, struct_args_span, _) = args::extract::<StructArgs, _>(attrs, "get");
 
     if let Data::Struct(DataStruct { fields, .. }) = data {
         let generics = generics;
@@ -30,10 +30,9 @@ pub fn expand(input: DeriveInput) -> TokenStream {
             }
         };
 
-        let getters = fields
-            .into_iter()
-            .enumerate()
-            .map(|(field_idx, field)| Context::new(&struct_args, Field::new(field, field_idx)));
+        let getters = fields.into_iter().enumerate().map(|(field_idx, field)| {
+            Context::new(&struct_args, struct_args_span, Field::new(field, field_idx))
+        });
 
         quote_spanned! { input.span() =>
             impl #impl_generics #ident #ty_generics #where_clause {
