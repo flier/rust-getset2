@@ -1,6 +1,6 @@
 use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
-use syn::{spanned::Spanned, Visibility};
+use syn::{parse_quote_spanned, spanned::Spanned, Visibility};
 
 use crate::{args, field::Field as BaseField};
 
@@ -19,8 +19,16 @@ impl<'a> Context<'a> {
         struct_args_span: Option<Span>,
         field: BaseField,
     ) -> Self {
-        let (field_args, field_args_span, field_attrs) =
-            args::extract::<FieldArgs, _>(field.attrs.clone(), "set");
+        let (field_args, field_args_span, mut field_attrs) =
+            args::extract::<FieldArgs, _>(field.attrs.clone(), "set", struct_args.allowed_attrs());
+
+        if let Some(meta) = field_args.attr.as_ref() {
+            field_attrs.extend(meta.args.iter().map(|meta| {
+                parse_quote_spanned! { meta.span() =>
+                    #[ #meta ]
+                }
+            }));
+        }
 
         Self {
             struct_args,

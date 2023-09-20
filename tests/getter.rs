@@ -376,3 +376,35 @@ fn test_unnamed_struct() {
     assert_eq!(unnamed.x(), 123);
     assert_eq!(unnamed.arg1(), 456);
 }
+
+#[test]
+fn test_get_attr() {
+    #[derive(Default, Getter)]
+    #[get(pub, const, copy)]
+    struct Foo {
+        #[doc = "test"]
+        #[get(attr(rustfmt::skip))]
+        #[get(attr(clippy::cyclomatic_complexity = "100"))]
+        bar: usize,
+    }
+
+    let foo = Foo { bar: 123 };
+
+    assert_eq!(foo.bar(), 123);
+}
+
+#[test]
+fn test_get_attrs() {
+    #[derive(Default, Getter)]
+    #[get(pub, const, copy, attrs("rustfmt", "clippy"))]
+    struct Foo {
+        #[doc = "test"]
+        #[rustfmt::skip]
+        #[clippy::cyclomatic_complexity = "100"]
+        bar: usize,
+    }
+
+    let foo = Foo { bar: 123 };
+
+    assert_eq!(foo.bar(), 123);
+}

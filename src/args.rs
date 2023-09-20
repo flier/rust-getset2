@@ -66,13 +66,42 @@ where
     lhs.as_bool().or(rhs.as_bool())
 }
 
+pub fn merge_name_args<T: Clone>(
+    lhs: &mut Option<NameArgs<Vec<T>>>,
+    rhs: Option<NameArgs<Vec<T>>>,
+) {
+    if let Some(lhs) = lhs {
+        if let Some(rhs) = rhs {
+            lhs.args.extend(rhs.args);
+        }
+    } else {
+        *lhs = rhs
+    }
+}
+
 pub fn merge_flag(lhs: &mut Flag, rhs: Flag) {
     if rhs.span.is_some() {
         lhs.span = rhs.span
     }
 }
 
-pub fn extract<T, I>(attrs: I, name: &str) -> (T, Option<Span>, Vec<Attribute>)
+const WELL_KNOWN_ATTRS: &[&str] = &[
+    "allow",
+    "cfg",
+    "cfg_attr",
+    "deny",
+    "deprecated",
+    "doc",
+    "forbid",
+    "must_use",
+    "warn",
+];
+
+pub fn extract<T, I>(
+    attrs: I,
+    name: &str,
+    allowed_attrs: Option<Vec<String>>,
+) -> (T, Option<Span>, Vec<Attribute>)
 where
     I: IntoIterator<Item = Attribute>,
     T: Default + Parse + Merge,
@@ -104,13 +133,20 @@ where
             },
         );
 
+    let all_allowed_attrs = allowed_attrs
+        .unwrap_or_default()
+        .iter()
+        .cloned()
+        .chain(WELL_KNOWN_ATTRS.iter().map(|&s| s.to_string()))
+        .collect::<Vec<_>>();
+
     let attrs = attrs
         .into_iter()
         .filter(|attr| {
             attr.style == AttrStyle::Outer
-                && (attr.path().is_ident("doc")
-                    || attr.path().is_ident("cfg")
-                    || attr.path().is_ident("allow"))
+                && all_allowed_attrs
+                    .iter()
+                    .any(|name| attr.path().segments.first().unwrap().ident == name)
         })
         .collect::<Vec<_>>();
 

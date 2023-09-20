@@ -16,7 +16,7 @@ pub fn expand(input: DeriveInput) -> TokenStream {
         ..
     } = input.clone();
 
-    let (struct_args, struct_args_span, _) = args::extract::<StructArgs, _>(attrs, "get");
+    let (struct_args, struct_args_span, _) = args::extract::<StructArgs, _>(attrs, "get", None);
 
     if let Data::Struct(DataStruct { fields, .. }) = data {
         let generics = generics;

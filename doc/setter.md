@@ -4,6 +4,7 @@ Derive `Setter` to generate the trivial setters base on the fields in a structur
 - [Helper attributes](#helper-attributes)
   - [Visibility](#visibility): `pub` attribute
   - [Naming](#naming): `prefix`, `suffix` and `rename` attributes
+  - [Pass-through Attribute](#pass-through-attribute): `attr` attribute
 
 # Example
 
@@ -12,14 +13,16 @@ Derive `Setter` to generate the trivial setters base on the fields in a structur
 
 | attribute | struct | field | description |
 | --------- | ------ | ----- | ----------- |
-| `pub` | ✔ | ✔ | Change the visibility of getter |
-| `prefix` | ✔ | ✔ | Prepend a `prefix` to the getter name |
-| `suffix` | ✔ | ✔ | Append a `suffix` to the getter name |
-| `rename` | | ✔ | Set the getter name |
+| [attr(...)](#pass-through-attribute) | | ✔ | Set attributes on the setter |
+| [attrs(...)](#pass-through-attribute) | ✔ | | Add attributes to passthrough allow list |
+| [prefix = "..."](#naming) | ✔ | ✔ | Prepend a `prefix` to the setter name |
+| [pub(...)](#visibility) | ✔ | ✔ | Change the visibility of setter |
+| [rename = "...`](#naming) | | ✔ | Set the setter name |
+| [suffix = "...`](#naming) | ✔ | ✔ | Append a `suffix` to the setter name |
 
 ## Visibility
 
-By default, all `getter` visibility is consistent with the `field`, but you can change that with the `pub` attribute.
+By default, all `setter` visibility is consistent with the `field`, but you can change that with the `pub` attribute.
 
 | attribute | struct | field | description |
 | --------- | ------ | ----- | ----------- |
@@ -128,5 +131,61 @@ fn main() {
     assert_eq!(foo.with_prefix_field(123).prefix_field(), 123);
     assert_eq!(foo.set_suffix_field_num(456).suffix_field(), 456);
     assert_eq!(foo.set_x(789).x(), 789);
+}
+```
+
+## Pass-through Attribute
+
+`#[derive(Setter)]` automatic copies doc comments and  well-known attributes `#[...]` from your fields to the according setter methods, if it is one of the following:
+
+- `/// ...` or `#[doc = ...]` - Documentation comments
+- `#[cfg(...)]` or `#[cfg_attr(...)]` - Conditional compilation
+- `#[allow(...)]`, `#[deny(...)]`, `#[forbid(...)]` or `#[warn(...)]` — Alters the default lint level.
+- `#[deprecated(...)]` — Generates deprecation notices.
+- `#[must_use]` — Generates a lint for unused values.
+
+In addition to that you can set attributes on setter using the `#[set(attr(...))]` attributes:
+
+```rust
+use getset2::{Getter, Setter};
+
+#[derive(Default, Getter, Setter)]
+#[get(pub, const, copy)]
+struct Foo {
+    /// some attribute
+    #[set(attr(rustfmt::skip))]
+    #[set(attr(clippy::cyclomatic_complexity = "100"))]
+    bar: usize,
+}
+```
+
+The following code will be generated.
+
+```rust,ignore
+ impl Foo {
+    ///test
+    #[rustfmt::skip]
+    #[clippy::cyclomatic_complexity = "100"]
+    #[inline(always)]
+    fn set_bar(&mut self, bar: usize) -> &mut Self {
+        self.bar = bar;
+        self
+    }
+}
+```
+
+You can also mark the name of the attribute to be passthrough directly on struct with `#[set(attrs(...))]` attribute.
+
+```rust
+use getset2::{Getter, Setter};
+
+#[derive(Default, Getter, Setter)]
+#[get(pub, const, copy)]
+#[set(attrs("rustfmt", "clippy"))]
+struct Foo {
+    #[doc = "test"]
+    #[rustfmt::skip]
+    #[clippy::cyclomatic_complexity = "100"]
+    bar: usize,
 }
 ```

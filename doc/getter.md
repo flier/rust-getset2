@@ -7,6 +7,7 @@ Derive `Getter` to generate the trivial getters base on the fields in a structur
   - [Mutable](#mutable): `mut` attribute
   - [Naming](#naming): `prefix`, `suffix` and `rename` attributes
   - [Result Type](#result-type): `clone`, `copy` attributes
+  - [Pass-through Attribute](#pass-through-attribute): `attr` attribute
 
 # Example
 
@@ -15,14 +16,16 @@ Derive `Getter` to generate the trivial getters base on the fields in a structur
 
 | attribute | struct | field | description |
 | --------- | ------ | ----- | ----------- |
-| `pub` | ✔ | ✔ | Change the visibility of getter |
-| `const` | ✔ | ✔ | A `const` function is permitted to call from a const context |
-| `mut` | ✔ | ✔ | Generating mutable getter |
-| `prefix` | ✔ | ✔ | Prepend a `prefix` to the getter name |
-| `suffix` | ✔ | ✔ | Append a `suffix` to the getter name |
-| `rename` | | ✔ | Set the getter name |
-| `clone` | ✔ | ✔ | Return a `cloned` value |
-| `copy` | ✔ | ✔ | Return a `copied` value |
+| [attr(...)](#pass-through-attribute) | | ✔ | Set attributes on the getter |
+| [attrs(...)](#pass-through-attribute) | ✔ | | Add attributes to passthrough allow list |
+| [clone](#result-type) | ✔ | ✔ | Return a `cloned` value |
+| [const](#constness) | ✔ | ✔ | A `const` function is permitted to call from a const context |
+| [copy](#result-type) | ✔ | ✔ | Return a `copied` value |
+| [mut](#mutable) | ✔ | ✔ | Generating mutable getter |
+| [prefix = "..."](#naming) | ✔ | ✔ | Prepend a `prefix` to the getter name |
+| [pub(...)](#visibility) | ✔ | ✔ | Change the visibility of getter |
+| [rename = "..."](#naming) | | ✔ | Set the getter name |
+| [suffix = "..."](#naming) | ✔ | ✔ | Append a `suffix` to the getter name |
 
 ## Visibility
 
@@ -264,5 +267,59 @@ fn main() {
 
     // the result type is `usize`, not `&usize`
     assert_eq!(foo.copy_field(), 123);
+}
+```
+
+## Pass-through Attribute
+
+`#[derive(Getter)]` automatic copies doc comments and  well-known attributes `#[...]` from your fields to the according getter methods, if it is one of the following:
+
+- `/// ...` or `#[doc = ...]` - Documentation comments
+- `#[cfg(...)]` or `#[cfg_attr(...)]` - Conditional compilation
+- `#[allow(...)]`, `#[deny(...)]`, `#[forbid(...)]` or `#[warn(...)]` — Alters the default lint level.
+- `#[deprecated(...)]` — Generates deprecation notices.
+- `#[must_use]` — Generates a lint for unused values.
+
+In addition to that you can set attributes on getter using the `#[get(attr(...))]` attributes:
+
+```rust
+use getset2::Getter;
+
+#[derive(Default, Getter)]
+#[get(pub, const, copy)]
+struct Foo {
+    /// some attribute
+    #[get(attr(rustfmt::skip))]
+    #[get(attr(clippy::cyclomatic_complexity = "100"))]
+    bar: usize,
+}
+```
+
+The following code will be generated.
+
+```rust,ignore
+impl Foo {
+    /// some attribute
+    #[rustfmt::skip]
+    #[clippy::cyclomatic_complexity = "100"]
+    #[inline(always)]
+    pub const fn bar(&self) -> usize {
+        self.bar
+    }
+}
+```
+
+You can also mark the name of the attribute to be passthrough directly on struct with `#[get(attrs(...))]` attribute.
+
+```rust
+use getset2::Getter;
+
+#[derive(Default, Getter)]
+#[get(pub, const, copy, attrs("rustfmt", "clippy"))]
+struct Foo {
+    #[doc = "test"]
+    #[rustfmt::skip]
+    #[clippy::cyclomatic_complexity = "100"]
+    bar: usize,
 }
 ```

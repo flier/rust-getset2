@@ -2,10 +2,13 @@ use merge::Merge;
 use structmeta::{Flag, NameArgs, NameValue, StructMeta};
 use syn::{
     parse::{Parse, ParseStream},
-    Ident, LitBool, LitStr, Token, Type, TypeParam,
+    Ident, LitBool, LitStr, Meta, Token, Type, TypeParam,
 };
 
-use crate::{args::merge_flag, vis::Restricted};
+use crate::{
+    args::{merge_flag, merge_name_args},
+    vis::Restricted,
+};
 
 #[derive(Clone, Debug, Default, Merge, StructMeta)]
 pub struct StructArgs {
@@ -19,6 +22,16 @@ pub struct StructArgs {
     pub opt: Flag,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,
+    #[merge(strategy = merge_name_args)]
+    pub attrs: Option<NameArgs<Vec<LitStr>>>,
+}
+
+impl StructArgs {
+    pub fn allowed_attrs(&self) -> Option<Vec<String>> {
+        self.attrs
+            .as_ref()
+            .map(|arg| arg.args.iter().map(|s| s.value()).collect())
+    }
 }
 
 #[derive(Clone, Debug, Default, Merge, StructMeta)]
@@ -34,6 +47,8 @@ pub struct FieldArgs {
     pub rename: Option<NameArgs<Ident>>,
     pub prefix: Option<NameValue<LitStr>>,
     pub suffix: Option<NameValue<LitStr>>,
+    #[merge(strategy = merge_name_args)]
+    pub attr: Option<NameArgs<Vec<Meta>>>,
 }
 
 #[derive(Clone, Debug)]
