@@ -1,49 +1,74 @@
-use derive_more::{Deref, DerefMut};
 use proc_macro_error::abort;
-use syn::{parse_quote_spanned, spanned::Spanned, Block, Type};
+use syn::{parse_quote_spanned, spanned::Spanned, ItemFn, Type};
 
 use crate::{args, ty::TypeExt};
 
-use super::{Context, Getter, MutGetter};
+use super::{gen, Context};
 
-#[derive(Clone, Debug, Deref, DerefMut)]
-pub struct SliceGetter(Getter);
+pub fn getter(ctx: &Context) -> ItemFn {
+    let mut getter = gen::getter(ctx);
 
-impl SliceGetter {
-    pub fn new(ctx: &Context) -> Self {
-        let mut getter = Getter::new(ctx);
+    getter.sig.output = {
+        let inner_ty = ctx.slice_inner_ty();
 
-        getter.sig.output = {
-            let inner_ty = ctx.slice_inner_ty();
+        parse_quote_spanned! { ctx.field.ty.span() =>
+            -> & [ #inner_ty ]
+        }
+    };
+    getter.block = {
+        let field_name = ctx.field.name();
 
-            parse_quote_spanned! { ctx.field.ty.span() =>
-                -> & [ #inner_ty ]
-            }
-        };
-        getter.block = ctx.as_slice();
+        if let Some(path) = ctx
+            .field
+            .args
+            .slice
+            .as_ref()
+            .and_then(|arg| arg.args.as_ref())
+        {
+            parse_quote_spanned!(ctx.field.span() => {
+                #path( self.#field_name )
+            })
+        } else {
+            parse_quote_spanned!(ctx.field.span() => {
+                self. #field_name .as_slice()
+            })
+        }
+    };
 
-        Self(getter)
-    }
+    getter
 }
 
-#[derive(Clone, Debug, Deref, DerefMut)]
-pub struct MutSliceGetter(MutGetter);
+pub fn mut_getter(ctx: &Context) -> ItemFn {
+    let mut getter = gen::mut_getter(ctx);
 
-impl MutSliceGetter {
-    pub fn new(ctx: &Context) -> Self {
-        let mut getter = MutGetter::new(ctx);
+    getter.sig.output = {
+        let inner_ty = ctx.slice_inner_ty();
 
-        getter.sig.output = {
-            let inner_ty = ctx.slice_inner_ty();
+        parse_quote_spanned! { ctx.field.ty.span() =>
+            -> &mut [ #inner_ty ]
+        }
+    };
+    getter.block = {
+        let field_name = ctx.field.name();
 
-            parse_quote_spanned! { ctx.field.ty.span() =>
-                -> &mut [ #inner_ty ]
-            }
-        };
-        getter.block = ctx.as_mut_slice();
+        if let Some(path) = ctx
+            .field
+            .args
+            .mut_slice
+            .as_ref()
+            .and_then(|arg| arg.args.as_ref())
+        {
+            parse_quote_spanned!(ctx.field.span() => {
+                #path( self.#field_name )
+            })
+        } else {
+            parse_quote_spanned!(ctx.field.span() => {
+                self. #field_name .as_mut_slice()
+            })
+        }
+    };
 
-        Self(getter)
-    }
+    getter
 }
 
 impl Context<'_> {
@@ -83,47 +108,7 @@ impl Context<'_> {
         false
     }
 
-    pub fn as_slice(&self) -> Box<Block> {
-        let field_name = self.field.name();
-
-        if let Some(path) = self
-            .field
-            .args
-            .slice
-            .as_ref()
-            .and_then(|arg| arg.args.as_ref())
-        {
-            parse_quote_spanned!(self.field.span() => {
-                #path( self.#field_name )
-            })
-        } else {
-            parse_quote_spanned!(self.field.span() => {
-                self. #field_name .as_slice()
-            })
-        }
-    }
-
-    pub fn as_mut_slice(&self) -> Box<Block> {
-        let field_name = self.field.name();
-
-        if let Some(path) = self
-            .field
-            .args
-            .mut_slice
-            .as_ref()
-            .and_then(|arg| arg.args.as_ref())
-        {
-            parse_quote_spanned!(self.field.span() => {
-                #path( self.#field_name )
-            })
-        } else {
-            parse_quote_spanned!(self.field.span() => {
-                self. #field_name .as_slice()
-            })
-        }
-    }
-
-    pub fn slice_inner_ty(&self) -> Type {
+    fn slice_inner_ty(&self) -> Type {
         match self.field.ty.slice_inner_ty() {
             Some(ty) => ty,
             None => {

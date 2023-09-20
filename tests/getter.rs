@@ -33,7 +33,7 @@ mod foo {
     }
 
     #[test]
-    fn test_private_getter() {
+    fn test_private() {
         let bar = Bar::default();
 
         assert_eq!(bar.private_field(), 0);
@@ -41,7 +41,7 @@ mod foo {
     }
 
     #[test]
-    fn test_pub_getter() {
+    fn test_get_pub() {
         let bar = Bar::default();
 
         assert_eq!(bar.pub_in_module_field(), 0);
@@ -49,14 +49,14 @@ mod foo {
 }
 
 #[test]
-fn test_public_getter() {
+fn test_public() {
     let foobar = foo::Bar::default();
 
     assert_eq!(foobar.public_field(), 0);
 }
 
 #[test]
-fn test_pub_getter() {
+fn test_get_pub() {
     let foobar = foo::Bar::default();
 
     assert_eq!(foobar.pub_field(), 0);
@@ -65,7 +65,7 @@ fn test_pub_getter() {
 }
 
 #[test]
-fn test_mut_getter() {
+fn test_get_mut() {
     #[derive(Default, Getter)]
     struct Foo {
         #[get(mut, copy)]
@@ -80,7 +80,7 @@ fn test_mut_getter() {
 }
 
 #[test]
-fn test_getter_with_prefix() {
+fn test_prefix() {
     #[derive(Default, Getter)]
     struct Foo {
         #[get(prefix = "with", copy, mut)]
@@ -95,7 +95,7 @@ fn test_getter_with_prefix() {
 }
 
 #[test]
-fn test_getter_with_suffix() {
+fn test_suffix() {
     #[derive(Default, Getter)]
     struct Foo {
         #[get(suffix = "num", copy, mut)]
@@ -110,7 +110,7 @@ fn test_getter_with_suffix() {
 }
 
 #[test]
-fn test_copy_field() {
+fn test_get_copy() {
     #[derive(Default, Getter)]
     struct Foo {
         #[get(copy, mut)]
@@ -130,7 +130,7 @@ fn test_copy_field() {
 }
 
 #[test]
-fn test_clone_field() {
+fn test_get_clone() {
     #[derive(Default, Getter)]
     struct Foo {
         #[get(clone, mut)]
@@ -150,7 +150,7 @@ fn test_clone_field() {
 }
 
 #[test]
-fn test_opt_field() {
+fn test_get_opt() {
     #[derive(Default, Getter)]
     struct Foo {
         #[get(opt, mut)]
@@ -169,13 +169,13 @@ fn test_opt_field() {
 }
 
 #[test]
-fn test_slice_field() {
+fn test_get_slice() {
     #[derive(Default, Getter)]
     struct Foo {
-        #[get(slice, mut)]
+        #[get(slice, mut_slice)]
         pub vec_field: Vec<u8>,
 
-        #[get(slice, mut)]
+        #[get(slice, mut_slice)]
         pub array_field: [u8; 4],
     }
 

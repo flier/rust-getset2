@@ -1,35 +1,29 @@
-use derive_more::{Deref, DerefMut};
-use syn::{parse_quote_spanned, spanned::Spanned};
+use syn::{parse_quote_spanned, spanned::Spanned, ItemFn};
 
 use crate::args;
 
-use super::{Context, Getter};
+use super::{gen, Context};
 
-#[derive(Clone, Debug, Deref, DerefMut)]
-pub struct CopyGetter(Getter);
+pub fn getter(ctx: &Context) -> ItemFn {
+    let mut getter = gen::getter(ctx);
 
-impl CopyGetter {
-    pub fn new(ctx: &Context) -> Self {
-        let mut getter = Getter::new(ctx);
+    getter.sig.output = {
+        let ty = &ctx.field.ty;
 
-        getter.sig.output = {
-            let ty = &ctx.field.ty;
+        parse_quote_spanned! { ctx.field.ty.span() =>
+            -> #ty
+        }
+    };
 
-            parse_quote_spanned! { ctx.field.ty.span() =>
-                -> #ty
-            }
-        };
+    getter.block = {
+        let field_name = ctx.field.name();
 
-        getter.block = {
-            let field_name = ctx.field.name();
+        parse_quote_spanned! ( ctx.field.span() => {
+            self.#field_name
+        })
+    };
 
-            parse_quote_spanned! ( ctx.field.span() => {
-                self.#field_name
-            })
-        };
-
-        Self(getter)
-    }
+    getter
 }
 
 impl Context<'_> {

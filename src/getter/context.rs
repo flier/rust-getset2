@@ -4,11 +4,7 @@ use syn::{Token, Visibility};
 
 use crate::{args, field::Field as BaseField};
 
-use super::{
-    BorrowGetter, BorrowMutGetter, BytesGetter, CloneGetter, CopyGetter, Field, FieldArgs, Getter,
-    MutGetter, MutOptionGetter, MutSliceGetter, MutStrGetter, OptionExt, OptionGetter, SliceGetter,
-    StrGetter, StructArgs,
-};
+use super::{Field, FieldArgs, StructArgs};
 
 #[derive(Clone, Debug)]
 pub struct Context<'a> {
@@ -50,34 +46,34 @@ impl<'a> ToTokens for Context<'a> {
         }
 
         if self.is_copyable() {
-            CopyGetter::new(self).to_tokens(tokens)
+            super::copy::getter(self).to_tokens(tokens)
         } else if self.is_cloneable() {
-            CloneGetter::new(self).to_tokens(tokens)
+            super::clone::getter(self).to_tokens(tokens)
         } else if self.is_option() {
-            OptionGetter::new(self).to_tokens(tokens)
+            super::option::getter(self).to_tokens(tokens)
         } else if self.is_slice() {
-            SliceGetter::new(self).to_tokens(tokens)
+            super::slice::getter(self).to_tokens(tokens)
         } else if self.is_str() {
-            StrGetter::new(self).to_tokens(tokens)
+            super::str::getter(self).to_tokens(tokens)
         } else if self.is_bytes() {
-            BytesGetter::new(self).to_tokens(tokens)
+            super::bytes::getter(self).to_tokens(tokens)
         } else if self.is_borrow() {
-            BorrowGetter::new(self).to_tokens(tokens)
+            super::borrow::getter(self).to_tokens(tokens)
         } else {
-            Getter::new(self).to_tokens(tokens)
+            super::gen::getter(self).to_tokens(tokens)
         };
 
         if self.is_mutable() || self.is_mut_slice() || self.is_mut_str() || self.is_borrow_mut() {
             if self.is_option() {
-                MutOptionGetter::new(self).to_tokens(tokens)
+                super::option::mut_getter(self).to_tokens(tokens)
             } else if self.is_mut_slice() {
-                MutSliceGetter::new(self).to_tokens(tokens)
+                super::slice::mut_getter(self).to_tokens(tokens)
             } else if self.is_mut_str() {
-                MutStrGetter::new(self).to_tokens(tokens)
+                super::str::mut_getter(self).to_tokens(tokens)
             } else if self.is_borrow_mut() {
-                BorrowMutGetter::new(self).to_tokens(tokens)
+                super::borrow::mut_getter(self).to_tokens(tokens)
             } else {
-                MutGetter::new(self).to_tokens(tokens)
+                super::gen::mut_getter(self).to_tokens(tokens)
             }
         }
     }

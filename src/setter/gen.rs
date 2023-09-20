@@ -1,8 +1,6 @@
 use quote::format_ident;
 use syn::{parse_quote_spanned, spanned::Spanned, ItemFn};
 
-use crate::args;
-
 use super::Context;
 
 pub fn setter(ctx: &Context) -> ItemFn {
@@ -19,15 +17,9 @@ pub fn setter(ctx: &Context) -> ItemFn {
     parse_quote_spanned! { ctx.field.span() =>
         #( #attrs )*
         #[inline(always)]
-        #vis fn #method_name<ARG: Into<#ty>>(&mut self, #arg_name: ARG) -> &mut Self {
-            self.#field_name = ::std::convert::Into::into(#arg_name);
+        #vis fn #method_name(&mut self, #arg_name: #ty) -> &mut Self {
+            self.#field_name = #arg_name;
             self
         }
-    }
-}
-
-impl Context<'_> {
-    pub fn is_into(&self) -> bool {
-        args::merge_bool(&self.field.args.into, &self.struct_args.into).unwrap_or_default()
     }
 }

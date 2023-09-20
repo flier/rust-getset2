@@ -32,7 +32,7 @@ mod foo {
     }
 
     #[test]
-    fn test_private_setter() {
+    fn test_private() {
         let mut bar = Bar::default();
 
         assert_eq!(bar.set_private_field(123).private_field(), 123);
@@ -40,7 +40,7 @@ mod foo {
     }
 
     #[test]
-    fn test_pub_setter() {
+    fn test_set_pub() {
         let mut bar = Bar::default();
 
         assert_eq!(bar.set_pub_in_module_field(123).pub_in_module_field(), 123);
@@ -48,14 +48,14 @@ mod foo {
 }
 
 #[test]
-fn test_public_setter() {
+fn test_public() {
     let mut foobar = foo::Bar::default();
 
     assert_eq!(foobar.set_public_field(123).public_field(), 123);
 }
 
 #[test]
-fn test_pub_setter() {
+fn test_set_pub() {
     let mut foobar = foo::Bar::default();
 
     assert_eq!(foobar.set_pub_field(123).pub_field(), 123);
@@ -81,7 +81,7 @@ fn test_unnamed_struct() {
 }
 
 #[test]
-fn test_into_setter() {
+fn test_set_into() {
     #[derive(Default, Getter, Setter)]
     pub struct Foo {
         #[get(str)]

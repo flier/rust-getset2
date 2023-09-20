@@ -1,61 +1,64 @@
-use derive_more::{Deref, DerefMut};
 use proc_macro_error::abort;
-use syn::{parse_quote_spanned, spanned::Spanned, Type};
+use syn::{parse_quote_spanned, spanned::Spanned, ItemFn};
 
 use crate::args::AsBool;
 
-use super::{Context, Getter, MutGetter};
+use super::{gen, Context};
 
-#[derive(Clone, Debug, Deref, DerefMut)]
-pub struct BorrowGetter(Getter);
+pub fn getter(ctx: &Context) -> ItemFn {
+    let mut getter = gen::getter(ctx);
 
-impl BorrowGetter {
-    pub fn new(ctx: &Context) -> Self {
-        let mut getter = Getter::new(ctx);
-
-        getter.sig.output = {
-            let borrowed_ty = ctx.borrowed_ty();
-
-            parse_quote_spanned! { ctx.field.ty.span() =>
-                -> & #borrowed_ty
-            }
-        };
-        getter.block = {
-            let field_name = ctx.field.name();
-
-            parse_quote_spanned!(ctx.field.span() => {
-                ::std::borrow::Borrow::borrow(& self.#field_name)
-            })
+    getter.sig.output = {
+        let borrowed_ty = if let Some(ref arg) = ctx.field.args.borrow {
+            &arg.args
+        } else {
+            abort!(
+                ctx.field.span(),
+                "#[get(borrow(..))] should have a Borrowed type"
+            );
         };
 
-        Self(getter)
-    }
+        parse_quote_spanned! { ctx.field.ty.span() =>
+            -> & #borrowed_ty
+        }
+    };
+    getter.block = {
+        let field_name = ctx.field.name();
+
+        parse_quote_spanned!(ctx.field.span() => {
+            ::std::borrow::Borrow::borrow(& self.#field_name)
+        })
+    };
+
+    getter
 }
 
-#[derive(Clone, Debug, Deref, DerefMut)]
-pub struct BorrowMutGetter(MutGetter);
+pub fn mut_getter(ctx: &Context) -> ItemFn {
+    let mut getter = gen::mut_getter(ctx);
 
-impl BorrowMutGetter {
-    pub fn new(ctx: &Context) -> Self {
-        let mut getter = MutGetter::new(ctx);
-
-        getter.sig.output = {
-            let borrowed_ty = ctx.borrowed_mut_ty();
-
-            parse_quote_spanned! { ctx.field.ty.span() =>
-                -> &mut #borrowed_ty
-            }
-        };
-        getter.block = {
-            let field_name = ctx.field.name();
-
-            parse_quote_spanned!(ctx.field.span() => {
-                ::std::borrow::BorrowMut::borrow_mut(&mut self.#field_name)
-            })
+    getter.sig.output = {
+        let borrowed_ty = if let Some(ref arg) = ctx.field.args.borrow_mut {
+            &arg.args
+        } else {
+            abort!(
+                ctx.field.span(),
+                "#[get(borrow_mut(..))] should have a Borrowed type"
+            );
         };
 
-        Self(getter)
-    }
+        parse_quote_spanned! { ctx.field.ty.span() =>
+            -> &mut #borrowed_ty
+        }
+    };
+    getter.block = {
+        let field_name = ctx.field.name();
+
+        parse_quote_spanned!(ctx.field.span() => {
+            ::std::borrow::BorrowMut::borrow_mut(&mut self.#field_name)
+        })
+    };
+
+    getter
 }
 
 impl Context<'_> {
@@ -65,27 +68,5 @@ impl Context<'_> {
 
     pub fn is_borrow_mut(&self) -> bool {
         self.field.args.borrow_mut.bool()
-    }
-
-    pub fn borrowed_ty(&self) -> &Type {
-        if let Some(ref arg) = self.field.args.borrow {
-            &arg.args
-        } else {
-            abort!(
-                self.field.span(),
-                "#[get(borrow(..))] should have a Borrowed type"
-            );
-        }
-    }
-
-    pub fn borrowed_mut_ty(&self) -> &Type {
-        if let Some(ref arg) = self.field.args.borrow_mut {
-            &arg.args
-        } else {
-            abort!(
-                self.field.span(),
-                "#[get(borrow_mut(..))] should have a Borrowed type"
-            );
-        }
     }
 }
