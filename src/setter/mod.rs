@@ -6,6 +6,7 @@ mod field;
 mod gen;
 mod into;
 mod option;
+mod try_into;
 
 pub use self::args::{Extend, FieldArgs, StructArgs};
 pub use self::context::Context;

@@ -14,6 +14,8 @@ pub struct StructArgs {
     #[merge(strategy = merge_flag)]
     pub into: Flag,
     #[merge(strategy = merge_flag)]
+    pub try_into: Flag,
+    #[merge(strategy = merge_flag)]
     pub opt: Flag,
     #[merge(strategy = merge_flag)]
     pub extend: Flag,
@@ -28,6 +30,7 @@ pub struct FieldArgs {
     #[merge(strategy = merge::bool::overwrite_false)]
     pub skip: bool,
     pub into: Option<NameArgs<Option<LitBool>>>,
+    pub try_into: Option<NameArgs<Option<LitBool>>>,
     pub opt: Option<NameArgs<Option<LitBool>>>,
     pub extend: Option<NameArgs<Option<Extend>>>,
     pub rename: Option<NameArgs<Ident>>,

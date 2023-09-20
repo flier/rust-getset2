@@ -100,6 +100,20 @@ fn test_set_into() {
 }
 
 #[test]
+fn test_set_try_into() {
+    #[derive(Default, Getter, Setter)]
+    pub struct Foo {
+        #[get(copy)]
+        #[set(try_into)]
+        try_into_field: i32,
+    }
+
+    let mut foo = Foo::default();
+
+    assert_eq!(foo.set_try_into_field(123).unwrap().try_into_field(), 123);
+}
+
+#[test]
 fn test_set_opt() {
     #[derive(Default, Getter, Setter)]
     pub struct Foo {

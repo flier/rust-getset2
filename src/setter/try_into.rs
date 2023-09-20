@@ -17,18 +17,19 @@ pub fn setter(ctx: &Context) -> ItemFn {
     parse_quote_spanned! { ctx.field.span() =>
         #( #attrs )*
         #[inline(always)]
-        #vis fn #method_name<ARG>(&mut self, #arg_name: ARG) -> &mut Self
+        #vis fn #method_name<ARG>(&mut self, #arg_name: ARG)
+            -> ::std::result::Result<&mut Self, <ARG as ::std::convert::TryInto<#ty>>::Error>
         where
-            ARG : ::std::convert::Into<#ty>
+            ARG : ::std::convert::TryInto<#ty>
         {
-            self.#field_name = ::std::convert::Into::into(#arg_name);
-            self
+            self.#field_name = ::std::convert::TryInto::<#ty>::try_into(#arg_name)?;
+            Ok(self)
         }
     }
 }
 
 impl Context<'_> {
-    pub fn is_into(&self) -> bool {
-        args::merge_bool(&self.field.args.into, &self.struct_args.into).unwrap_or_default()
+    pub fn is_try_into(&self) -> bool {
+        args::merge_bool(&self.field.args.try_into, &self.struct_args.try_into).unwrap_or_default()
     }
 }

@@ -48,6 +48,8 @@ impl<'a> ToTokens for Context<'a> {
 
         if self.is_into() {
             super::into::setter(self).to_tokens(tokens)
+        } else if self.is_try_into() {
+            super::try_into::setter(self).to_tokens(tokens)
         } else if self.is_option() {
             super::option::setter(self).to_tokens(tokens)
         } else if self.is_extend() {
