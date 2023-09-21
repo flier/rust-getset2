@@ -1,6 +1,6 @@
 #[cfg(feature = "compile_error")]
 #[test]
-fn test_compile_error() {
+fn compile_error() {
     use std::path::Path;
 
     let t = trybuild::TestCases::new();
