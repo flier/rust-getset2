@@ -22,7 +22,7 @@ pub fn setter(ctx: &Context) -> ItemFn {
         #( #attrs )*
         #[inline(always)]
         #vis fn #method_name(&mut self, #arg_name: #inner_ty) -> &mut Self {
-            #field_name = ::std::option::Option::Some(#arg_name);
+            #field_name = ::std::option::Option::Some( #arg_name );
             self
         }
     }

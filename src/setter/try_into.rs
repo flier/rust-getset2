@@ -22,7 +22,7 @@ pub fn setter(ctx: &Context) -> ItemFn {
         where
             ARG : ::std::convert::TryInto<#ty>
         {
-            #field_name = ::std::convert::TryInto::<#ty>::try_into(#arg_name)?;
+            #field_name = ::std::convert::TryInto::<#ty>::try_into( #arg_name )?;
             Ok(self)
         }
     }

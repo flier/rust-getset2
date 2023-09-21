@@ -20,10 +20,10 @@ pub fn getter(ctx: &Context) -> ItemFn {
     };
 
     getter.block = {
-        let field_name = ctx.field.name();
+        let ref_field_name = ctx.field.ref_name();
 
         parse_quote_spanned!( ctx.field.span() => {
-            ::std::option::Option::as_ref(& #field_name)
+            ::std::option::Option::as_ref( #ref_field_name )
         })
     };
 
@@ -42,10 +42,10 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
     };
 
     getter.block = {
-        let field_name = ctx.field.name();
+        let ref_mut_field_name = ctx.field.ref_mut_name();
 
         parse_quote_spanned!( ctx.field.span() => {
-            ::std::option::Option::as_mut(&mut #field_name)
+            ::std::option::Option::as_mut( #ref_mut_field_name )
         })
     };
 

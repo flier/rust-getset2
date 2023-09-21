@@ -8,10 +8,10 @@ pub fn getter(ctx: &Context) -> ItemFn {
     let mut getter = copy::getter(ctx);
 
     getter.block = {
-        let field_name = ctx.field.name();
+        let ref_field_name = ctx.field.ref_name();
 
         parse_quote_spanned!(ctx.field.span() => {
-            ::std::clone::Clone::clone(& #field_name)
+            ::std::clone::Clone::clone( #ref_field_name )
         })
     };
 

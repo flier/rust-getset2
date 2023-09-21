@@ -60,7 +60,7 @@ pub fn setter(ctx: &Context) -> Setter {
             #( #attrs )*
             #[inline(always)]
             #vis fn #extend_setter #extend_generic (&mut self, #arg_name: ITER) -> &mut Self {
-                #field_name.extend(#arg_name);
+                #field_name.extend( #arg_name );
                 self
             }
         },

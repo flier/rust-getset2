@@ -1,7 +1,6 @@
-use quote::quote;
 use syn::{parse_quote, parse_quote_spanned, spanned::Spanned, ItemFn};
 
-use crate::{args, ty::TypeExt};
+use crate::args;
 
 use super::{gen, Context};
 
@@ -12,15 +11,15 @@ pub fn getter(ctx: &Context) -> ItemFn {
         -> &[u8]
     };
     getter.block = Box::new({
-        let field_name = ctx.field.name();
-
         if let Some(path) = ctx.field.args.bytes_path() {
-            let ref_ = ctx.field.ty.ref_elem_ty().is_none().then(|| quote! { & });
+            let ref_field_name = ctx.field.ref_name();
 
             parse_quote_spanned!(ctx.field.span() => {
-                #path(#ref_ #field_name )
+                #path( #ref_field_name )
             })
         } else {
+            let field_name = ctx.field.name();
+
             parse_quote_spanned!(ctx.field.span() => {
                 #field_name.as_bytes()
             })

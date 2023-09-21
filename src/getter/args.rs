@@ -75,6 +75,14 @@ pub struct FieldArgs {
 }
 
 impl FieldArgs {
+    pub fn borrow_ty(&self) -> Option<&Type> {
+        self.borrow.as_ref().map(|arg| &arg.args)
+    }
+
+    pub fn borrow_mut_ty(&self) -> Option<&Type> {
+        self.borrow_mut.as_ref().map(|arg| &arg.args)
+    }
+
     pub fn slice_path(&self) -> Option<&ExprPath> {
         extract_path(&self.slice)
     }

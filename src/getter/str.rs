@@ -1,5 +1,4 @@
 use proc_macro_error::abort;
-use quote::quote;
 use syn::{parse_quote, parse_quote_spanned, spanned::Spanned, ItemFn};
 
 use crate::{args, ty::TypeExt};
@@ -11,16 +10,15 @@ pub fn getter(ctx: &Context) -> ItemFn {
 
     getter.sig.output = parse_quote! { -> &str };
     getter.block = {
-        let ref_ = ctx.field.ty.ref_elem_ty().is_none().then(|| quote! { & });
-        let field_name = ctx.field.name();
+        let ref_field_name = ctx.field.ref_name();
 
         if let Some(path) = ctx.field.args.str_path() {
             parse_quote_spanned! (ctx.field.span() => {
-                #path (#ref_ #field_name)
+                #path ( #ref_field_name )
             })
         } else {
             parse_quote_spanned! (ctx.field.span() => {
-                ::std::string::String::as_str(#ref_ #field_name)
+                ::std::string::String::as_str( #ref_field_name )
             })
         }
     };
@@ -33,21 +31,15 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
 
     getter.sig.output = parse_quote! { -> &mut str };
     getter.block = {
-        let ref_mut = ctx
-            .field
-            .ty
-            .ref_elem_ty()
-            .is_none()
-            .then(|| quote! { &mut });
-        let field_name = ctx.field.name();
+        let ref_mut_field_name = ctx.field.ref_mut_name();
 
         if let Some(path) = ctx.field.args.mut_str_path() {
             parse_quote_spanned! (ctx.field.span() => {
-                #path (#ref_mut #field_name)
+                #path ( #ref_mut_field_name )
             })
         } else {
             parse_quote_spanned! (ctx.field.span() => {
-                ::std::string::String::as_mut_str(#ref_mut #field_name)
+                ::std::string::String::as_mut_str( #ref_mut_field_name )
             })
         }
     };
