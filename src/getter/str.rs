@@ -16,11 +16,11 @@ pub fn getter(ctx: &Context) -> ItemFn {
 
         if let Some(path) = ctx.field.args.str_path() {
             parse_quote_spanned! (ctx.field.span() => {
-                #path (#ref_ self.#field_name)
+                #path (#ref_ #field_name)
             })
         } else {
             parse_quote_spanned! (ctx.field.span() => {
-                ::std::string::String::as_str(#ref_ self.#field_name)
+                ::std::string::String::as_str(#ref_ #field_name)
             })
         }
     };
@@ -43,11 +43,11 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
 
         if let Some(path) = ctx.field.args.mut_str_path() {
             parse_quote_spanned! (ctx.field.span() => {
-                #path (#ref_mut self.#field_name)
+                #path (#ref_mut #field_name)
             })
         } else {
             parse_quote_spanned! (ctx.field.span() => {
-                ::std::string::String::as_mut_str(#ref_mut self.#field_name)
+                ::std::string::String::as_mut_str(#ref_mut #field_name)
             })
         }
     };

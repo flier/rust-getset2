@@ -20,11 +20,11 @@ pub fn getter(ctx: &Context) -> ItemFn {
 
         if ctx.field.ty.ref_elem_ty().is_some() {
             parse_quote_spanned! ( ctx.field.span() => {
-                * self.#field_name
+                * #field_name
             })
         } else {
             parse_quote_spanned! ( ctx.field.span() => {
-                self.#field_name
+                #field_name
             })
         }
     };

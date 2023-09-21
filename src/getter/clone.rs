@@ -11,7 +11,7 @@ pub fn getter(ctx: &Context) -> ItemFn {
         let field_name = ctx.field.name();
 
         parse_quote_spanned!(ctx.field.span() => {
-            ::std::clone::Clone::clone(& self.#field_name)
+            ::std::clone::Clone::clone(& #field_name)
         })
     };
 

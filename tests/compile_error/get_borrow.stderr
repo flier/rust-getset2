@@ -11,14 +11,13 @@ error: invalid #[get(..)] attribute, cannot find parameter `borrow` in this scop
    | ^
 
 error[E0277]: the trait bound `Arc<usize>: Borrow<isize>` is not satisfied
-  --> tests/compile_error/get_borrow.rs:25:5
+  --> tests/compile_error/get_borrow.rs:23:10
    |
-25 |       #[get(borrow(isize))] // #[get(borrow)] is not allowed for a field that is not a Borrow<T>
-   |       ^ required by a bound introduced by this call
-   |  _____|
-   | |
-26 | |     field: Arc<usize>,
-   | |_________^ the trait `Borrow<isize>` is not implemented for `Arc<usize>`
+23 | #[derive(Getter)]
+   |          ^^^^^^ the trait `Borrow<isize>` is not implemented for `Arc<usize>`
+24 | pub struct Struct3 {
+25 |     #[get(borrow(isize))] // #[get(borrow)] is not allowed for a field that is not a Borrow<T>
+   |     - required by a bound introduced by this call
    |
    = help: the trait `Borrow<T>` is implemented for `Arc<T>`
 

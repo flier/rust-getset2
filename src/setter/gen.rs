@@ -16,7 +16,7 @@ pub fn setter(ctx: &Context) -> ItemFn {
         #( #attrs )*
         #[inline(always)]
         #vis fn #method_name(&mut self, #arg_name: #ty) -> &mut Self {
-            self.#field_name = #arg_name;
+            #field_name = #arg_name;
             self
         }
     }

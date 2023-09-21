@@ -18,11 +18,11 @@ pub fn getter(ctx: &Context) -> ItemFn {
             let ref_ = ctx.field.ty.ref_elem_ty().is_none().then(|| quote! { & });
 
             parse_quote_spanned!(ctx.field.span() => {
-                #path(#ref_ self.#field_name )
+                #path(#ref_ #field_name )
             })
         } else {
             parse_quote_spanned!(ctx.field.span() => {
-                self.#field_name.as_bytes()
+                #field_name.as_bytes()
             })
         }
     });

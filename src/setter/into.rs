@@ -21,7 +21,7 @@ pub fn setter(ctx: &Context) -> ItemFn {
         where
             ARG : ::std::convert::Into<#ty>
         {
-            self.#field_name = ::std::convert::Into::into(#arg_name);
+            #field_name = ::std::convert::Into::into(#arg_name);
             self
         }
     }

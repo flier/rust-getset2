@@ -28,7 +28,7 @@ pub fn getter(ctx: &Context) -> ItemFn {
         let field_name = ctx.field.name();
 
         parse_quote_spanned!(ctx.field.span() => {
-            ::std::borrow::Borrow::borrow( #ref_ self.#field_name )
+            ::std::borrow::Borrow::borrow( #ref_ #field_name )
         })
     };
 
@@ -62,7 +62,7 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
         let field_name = ctx.field.name();
 
         parse_quote_spanned!(ctx.field.span() => {
-            ::std::borrow::BorrowMut::borrow_mut(#ref_mut self.#field_name)
+            ::std::borrow::BorrowMut::borrow_mut(#ref_mut #field_name)
         })
     };
 

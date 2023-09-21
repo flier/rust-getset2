@@ -18,7 +18,7 @@ pub fn getter(ctx: &Context) -> ItemFn {
         #( #attrs )*
         #[inline(always)]
         #vis #constness fn #method_name( &self ) -> & #ty {
-            & self. #field_name
+            & #field_name
         }
     }
 }
@@ -34,7 +34,7 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
         #( #attrs )*
         #[inline(always)]
         #vis fn #method_name( &mut self ) -> &mut #ty {
-            &mut self . #field_name
+            &mut #field_name
         }
     }
 }

@@ -61,14 +61,14 @@ pub fn setter(ctx: &Context, tokens: &mut TokenStream) {
         #( #attrs )*
         #[inline(always)]
         #vis fn #extend_setter<ITER: ::std::iter::IntoIterator<Item = #item_ty> #extend_generic>(&mut self, #arg_name: ITER) -> &mut Self {
-            self.#field_name.extend(#arg_name);
+            #field_name.extend(#arg_name);
             self
         }
 
         #( #attrs )*
         #[inline(always)]
         #vis fn #append_setter #append_generic (&mut self, #arg_name: #item_ty) -> &mut Self {
-            self.#field_name.extend([ #arg_name ]);
+            #field_name.extend([ #arg_name ]);
             self
         }
     })
