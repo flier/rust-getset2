@@ -3,12 +3,15 @@ use getset2::Getter;
 #[derive(Default, Getter)]
 #[get(pub, const, mut)]
 struct Foo {
+    /// `pub const fn private_field(&self) -> &usize`
     private_field: usize,
 
+    /// `pub const fn copy_field(&self) -> usize`
     #[get(copy)]
     copy_field: usize,
 
-    #[get(clone, const(false))]
+    /// `pub fn clone_field(&self) -> usize`
+    #[get(clone, const(false))] // #[get(clone)] is not allowed to a `const` getter
     clone_field: usize,
 }
 

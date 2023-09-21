@@ -1,4 +1,4 @@
-use syn::{parse_quote_spanned, spanned::Spanned, ItemFn};
+use syn::{parse_quote_spanned, ItemFn};
 
 use crate::args;
 
@@ -10,7 +10,7 @@ pub fn getter(ctx: &Context) -> ItemFn {
     getter.block = {
         let ref_field_name = ctx.field.ref_name();
 
-        parse_quote_spanned!(ctx.field.span() => {
+        parse_quote_spanned!(ctx.attr_span() => {
             ::std::clone::Clone::clone( #ref_field_name )
         })
     };

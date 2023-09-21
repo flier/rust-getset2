@@ -4,6 +4,8 @@ use getset2::Getter;
 
 #[derive(Default, Getter)]
 struct Foo {
+    /// `pub fn option_field(&self) -> Option<&HashMap<String, usize>>`
+    /// `pub fn option_field_mut(&mut self) -> Option<&mut HashMap<String, usize>>`
     #[get(opt, mut)]
     pub option_field: Option<HashMap<String, usize>>,
 }

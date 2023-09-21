@@ -2,9 +2,11 @@ use getset2::Getter;
 
 #[derive(Getter)]
 struct Foo<'a> {
+    /// `fn copy_field(&self) -> usize`
     #[get(copy, mut)]
     copy_field: usize,
 
+    /// `fn copy_ref_field(&self) -> usize`
     #[get(copy, mut)]
     copy_ref_field: &'a usize,
 }

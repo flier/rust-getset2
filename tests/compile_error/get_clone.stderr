@@ -1,0 +1,28 @@
+error[E0277]: the trait bound `Foobar: Clone` is not satisfied
+ --> tests/compile_error/get_clone.rs:3:10
+  |
+3 | #[derive(Getter)]
+  |          ^^^^^^ the trait `Clone` is not implemented for `Foobar`
+4 | pub struct Struct {
+5 |     #[get(clone)] // #[get(clone)] is not allowed for a field that is not implements `Clone`
+  |     - required by a bound introduced by this call
+  |
+help: consider annotating `Foobar` with `#[derive(Clone)]`
+  |
+15+ #[derive(Clone)]
+16| pub struct Foobar;
+  |
+
+error[E0277]: the trait bound `Foobar: Clone` is not satisfied
+  --> tests/compile_error/get_clone.rs:9:10
+   |
+9  | #[derive(Getter)]
+   |          ^^^^^^ the trait `Clone` is not implemented for `Foobar`
+10 | #[get(clone)] // #[get(clone)] is not allowed for a field that is not implements `Clone`
+   | - required by a bound introduced by this call
+   |
+help: consider annotating `Foobar` with `#[derive(Clone)]`
+   |
+15 + #[derive(Clone)]
+16 | pub struct Foobar;
+   |

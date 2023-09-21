@@ -1,0 +1,15 @@
+error[E0015]: cannot call non-const fn `<Foobar as Clone>::clone` in constant functions
+ --> tests/compile_error/get_const.rs:5:5
+  |
+5 |     #[get(const, clone)] // #[get(clone)] is not allowed to a `const` getter
+  |     ^
+  |
+  = note: calls in constant functions are limited to constant functions, tuple structs and tuple variants
+
+error[E0015]: cannot call non-const fn `<Foobar as Clone>::clone` in constant functions
+  --> tests/compile_error/get_const.rs:10:1
+   |
+10 | #[get(const, clone)] // #[get(clone)] is not allowed to a `const` getter
+   | ^
+   |
+   = note: calls in constant functions are limited to constant functions, tuple structs and tuple variants

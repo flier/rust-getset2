@@ -2,6 +2,7 @@ use getset2::Getter;
 
 #[derive(Default, Getter)]
 struct Foo {
+    /// `fn field_mut(&mut self) -> &mut usize`
     #[get(mut, copy)]
     field: usize,
 }

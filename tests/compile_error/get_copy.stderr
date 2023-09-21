@@ -1,0 +1,12 @@
+error[E0507]: cannot move out of `self.field` which is behind a shared reference
+ --> tests/compile_error/get_copy.rs:5:5
+  |
+5 | /     #[get(copy)] // #[get(copy)] is not allowed for a field that is not implements `Copy`
+6 | |     field: Foobar,
+  | |_________^ move occurs because `self.field` has type `Foobar`, which does not implement the `Copy` trait
+
+error[E0507]: cannot move out of `self.field` which is behind a shared reference
+  --> tests/compile_error/get_copy.rs:12:5
+   |
+12 |     field: Foobar,
+   |     ^^^^^ move occurs because `self.field` has type `Foobar`, which does not implement the `Copy` trait
