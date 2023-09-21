@@ -1,7 +1,8 @@
 use proc_macro_error::abort;
+use quote::quote;
 use syn::{parse_quote_spanned, spanned::Spanned, ItemFn};
 
-use crate::args::AsBool;
+use crate::{args::AsBool, ty::TypeExt};
 
 use super::{gen, Context};
 
@@ -23,10 +24,11 @@ pub fn getter(ctx: &Context) -> ItemFn {
         }
     };
     getter.block = {
+        let ref_ = ctx.field.ty.ref_elem_ty().is_none().then(|| quote! { & });
         let field_name = ctx.field.name();
 
         parse_quote_spanned!(ctx.field.span() => {
-            ::std::borrow::Borrow::borrow(& self.#field_name)
+            ::std::borrow::Borrow::borrow( #ref_ self.#field_name )
         })
     };
 
@@ -51,10 +53,16 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
         }
     };
     getter.block = {
+        let ref_mut = ctx
+            .field
+            .ty
+            .ref_elem_ty()
+            .is_none()
+            .then(|| quote! { &mut });
         let field_name = ctx.field.name();
 
         parse_quote_spanned!(ctx.field.span() => {
-            ::std::borrow::BorrowMut::borrow_mut(&mut self.#field_name)
+            ::std::borrow::BorrowMut::borrow_mut(#ref_mut self.#field_name)
         })
     };
 

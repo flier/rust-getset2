@@ -199,24 +199,40 @@ fn test_get_slice() {
 
 #[test]
 fn test_get_str() {
-    #[derive(Default, Getter)]
-    struct Foo {
+    #[derive(Getter)]
+    struct Foo<'a> {
         #[get(str, mut_str)]
         string_field: String,
+
+        #[get(str, mut_str)]
+        string_ref_field: &'a mut String,
+
+        #[get(str(cstr_to_str))]
+        cstr_field: &'a CStr,
     }
 
-    let mut foo = Foo::default();
+    fn cstr_to_str(s: &CStr) -> &str {
+        s.to_str().unwrap()
+    }
 
-    foo.string_field = "foo".to_owned();
+    let mut s = "bar".to_string();
+    let mut foo = Foo {
+        string_field: "foo".to_string(),
+        string_ref_field: &mut s,
+        cstr_field: CStr::from_bytes_with_nul(b"foo\0").unwrap(),
+    };
 
     foo.string_field_mut().make_ascii_uppercase();
+    foo.string_ref_field_mut().make_ascii_uppercase();
 
     assert_eq!(foo.string_field(), "FOO");
+    assert_eq!(foo.string_ref_field(), "BAR");
+    assert_eq!(foo.cstr_field(), "foo");
 }
 
 #[test]
 fn test_get_bytes() {
-    #[derive(Default, Getter)]
+    #[derive(Getter)]
     struct Foo<'a> {
         #[get(bytes)]
         str_field: &'a str,
@@ -224,22 +240,28 @@ fn test_get_bytes() {
         #[get(bytes)]
         string_field: String,
 
+        #[get(bytes)]
+        string_ref_field: &'a String,
+
         #[get(bytes(CStr::to_bytes))]
         cstr_field: &'a CStr,
 
-        #[get(bytes)]
+        #[get(bytes(CString::as_bytes))]
         cstring_field: CString,
     }
 
+    let s = "string".to_owned();
     let foo = Foo {
         str_field: "str",
-        string_field: "string".to_owned(),
+        string_field: s.clone(),
+        string_ref_field: &s,
         cstr_field: CStr::from_bytes_with_nul(b"cstr\0").unwrap(),
         cstring_field: CString::new("cstring").unwrap(),
     };
 
     assert_eq!(foo.str_field(), b"str");
     assert_eq!(foo.string_field(), b"string");
+    assert_eq!(foo.string_ref_field(), b"string");
     assert_eq!(foo.cstr_field(), b"cstr");
     assert_eq!(foo.cstring_field(), b"cstring");
 }

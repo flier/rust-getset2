@@ -93,7 +93,7 @@ impl Context<'_> {
     pub fn extend_item_ty(&self) -> Type {
         let ty = &self.field.ty;
 
-        if ty.is_string() {
+        if ty.is_string() || self.field.ty.is_ref_string() {
             return parse_quote! { char };
         } else if let Some(args) = ty::generic_args_ty(ty, WELL_KNOWN_SEQ) {
             if let Some(ty) = args.into_iter().next() {

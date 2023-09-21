@@ -10,6 +10,8 @@ pub trait TypeExt {
 
     fn is_string(&self) -> bool;
 
+    fn is_ref_string(&self) -> bool;
+
     fn is_str(&self) -> bool;
 
     fn ref_elem_ty(&self) -> Option<&Type>;
@@ -39,6 +41,10 @@ impl TypeExt for Type {
 
     fn is_string(&self) -> bool {
         self.is_ty("String")
+    }
+
+    fn is_ref_string(&self) -> bool {
+        self.is_ref_ty("String")
     }
 
     fn is_ref_ty(&self, name: &str) -> bool {

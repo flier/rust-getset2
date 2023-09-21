@@ -1,4 +1,5 @@
 use proc_macro_error::abort;
+use quote::quote;
 use syn::{parse_quote_spanned, spanned::Spanned, ItemFn, Type};
 
 use crate::{args, ty::TypeExt};
@@ -19,8 +20,10 @@ pub fn getter(ctx: &Context) -> ItemFn {
         let field_name = ctx.field.name();
 
         if let Some(path) = ctx.field.args.slice_path() {
+            let ref_ = ctx.field.ty.ref_elem_ty().is_none().then(|| quote! { & });
+
             parse_quote_spanned!(ctx.field.span() => {
-                #path( self.#field_name )
+                #path( #ref_ self.#field_name )
             })
         } else {
             parse_quote_spanned!(ctx.field.span() => {
@@ -43,11 +46,17 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
         }
     };
     getter.block = {
+        let ref_mut = ctx
+            .field
+            .ty
+            .ref_elem_ty()
+            .is_none()
+            .then(|| quote! { &mut });
         let field_name = ctx.field.name();
 
         if let Some(path) = ctx.field.args.mut_slice_path() {
             parse_quote_spanned!(ctx.field.span() => {
-                #path( self.#field_name )
+                #path( #ref_mut self.#field_name )
             })
         } else {
             parse_quote_spanned!(ctx.field.span() => {
@@ -62,7 +71,7 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
 impl Context<'_> {
     pub fn is_slice(&self) -> bool {
         if args::merge_bool(&self.field.args.slice, &self.struct_args.slice).unwrap_or_default() {
-            if self.field.ty.slice_inner_ty().is_some() {
+            if self.field.ty.slice_inner_ty().is_some() || self.field.args.slice_path().is_some() {
                 return true;
             }
 
@@ -81,7 +90,9 @@ impl Context<'_> {
         if args::merge_bool(&self.field.args.mut_slice, &self.struct_args.mut_slice)
             .unwrap_or_default()
         {
-            if self.field.ty.slice_inner_ty().is_some() {
+            if self.field.ty.slice_inner_ty().is_some()
+                || self.field.args.mut_slice_path().is_some()
+            {
                 return true;
             }
 
