@@ -4,8 +4,8 @@ use proc_macro_error::abort;
 use quote::format_ident;
 use structmeta::{Flag, NameArgs, NameValue};
 use syn::{
-    parse::Parse, parse_quote, spanned::Spanned, AttrStyle, Attribute, Ident, LitBool, LitStr,
-    Path, Token, Type, Visibility,
+    parse::Parse, parse_quote, spanned::Spanned, AttrStyle, Attribute, ExprPath, Ident, LitBool,
+    LitStr, Token, Type, Visibility,
 };
 
 use crate::vis::{AsVisibility, Restricted};
@@ -34,7 +34,7 @@ impl AsBool for Option<NameArgs<Option<LitBool>>> {
     }
 }
 
-impl AsBool for Option<NameArgs<Option<Path>>> {
+impl AsBool for Option<NameArgs<Option<ExprPath>>> {
     fn as_bool(&self) -> Option<bool> {
         self.as_ref().map(|_| true)
     }

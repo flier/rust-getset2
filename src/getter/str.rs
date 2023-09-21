@@ -12,13 +12,7 @@ pub fn getter(ctx: &Context) -> ItemFn {
     getter.block = {
         let field_name = ctx.field.name();
 
-        if let Some(path) = ctx
-            .field
-            .args
-            .str
-            .as_ref()
-            .and_then(|arg| arg.args.as_ref())
-        {
+        if let Some(path) = ctx.field.args.str_path() {
             parse_quote_spanned! (ctx.field.span() => {
                 #path (& self.#field_name)
             })
@@ -39,13 +33,7 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
     getter.block = {
         let field_name = ctx.field.name();
 
-        if let Some(path) = ctx
-            .field
-            .args
-            .str
-            .as_ref()
-            .and_then(|arg| arg.args.as_ref())
-        {
+        if let Some(path) = ctx.field.args.mut_str_path() {
             parse_quote_spanned! (ctx.field.span() => {
                 #path (& self.#field_name)
             })

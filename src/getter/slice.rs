@@ -18,13 +18,7 @@ pub fn getter(ctx: &Context) -> ItemFn {
     getter.block = {
         let field_name = ctx.field.name();
 
-        if let Some(path) = ctx
-            .field
-            .args
-            .slice
-            .as_ref()
-            .and_then(|arg| arg.args.as_ref())
-        {
+        if let Some(path) = ctx.field.args.slice_path() {
             parse_quote_spanned!(ctx.field.span() => {
                 #path( self.#field_name )
             })
@@ -51,13 +45,7 @@ pub fn mut_getter(ctx: &Context) -> ItemFn {
     getter.block = {
         let field_name = ctx.field.name();
 
-        if let Some(path) = ctx
-            .field
-            .args
-            .mut_slice
-            .as_ref()
-            .and_then(|arg| arg.args.as_ref())
-        {
+        if let Some(path) = ctx.field.args.mut_slice_path() {
             parse_quote_spanned!(ctx.field.span() => {
                 #path( self.#field_name )
             })
@@ -81,7 +69,7 @@ impl Context<'_> {
             if self.field.args.slice.is_some() {
                 abort!(
                     self.field.ty.span(),
-                    "#[get(slice)] should be applied to a Vec<T> or an array [T; N] type"
+                    "#[get(slice)] should be applied to a `Vec<T>` or an array `[T; N]` type"
                 );
             }
         }
@@ -100,7 +88,7 @@ impl Context<'_> {
             if self.field.args.mut_slice.is_some() {
                 abort!(
                     self.field.ty.span(),
-                    "#[get(mut_slice)] should be applied to a Vec<T> or an array [T; N] type"
+                    "#[get(mut_slice)] should be applied to a `Vec<T>` or an array `[T; N]` type"
                 );
             }
         }

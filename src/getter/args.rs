@@ -1,6 +1,6 @@
 use merge::Merge;
 use structmeta::{Flag, NameArgs, NameValue, StructMeta};
-use syn::{Ident, LitBool, LitStr, Meta, Path, Type};
+use syn::{ExprPath, Ident, LitBool, LitStr, Meta, Type};
 
 use crate::{
     args::{merge_flag, merge_name_args},
@@ -60,11 +60,11 @@ pub struct FieldArgs {
     #[struct_meta(name = "mut")]
     pub mutable: Option<NameArgs<Option<LitBool>>>,
     pub opt: Option<NameArgs<Option<LitBool>>>,
-    pub slice: Option<NameArgs<Option<Path>>>,
-    pub mut_slice: Option<NameArgs<Option<Path>>>,
-    pub str: Option<NameArgs<Option<Path>>>,
-    pub mut_str: Option<NameArgs<Option<Path>>>,
-    pub bytes: Option<NameArgs<Option<Path>>>,
+    pub slice: Option<NameArgs<Option<ExprPath>>>,
+    pub mut_slice: Option<NameArgs<Option<ExprPath>>>,
+    pub str: Option<NameArgs<Option<ExprPath>>>,
+    pub mut_str: Option<NameArgs<Option<ExprPath>>>,
+    pub bytes: Option<NameArgs<Option<ExprPath>>>,
     pub borrow: Option<NameArgs<Type>>,
     pub borrow_mut: Option<NameArgs<Type>>,
     pub rename: Option<NameArgs<Ident>>,
@@ -72,4 +72,30 @@ pub struct FieldArgs {
     pub suffix: Option<NameValue<LitStr>>,
     #[merge(strategy = merge_name_args)]
     pub attr: Option<NameArgs<Vec<Meta>>>,
+}
+
+impl FieldArgs {
+    pub fn slice_path(&self) -> Option<&ExprPath> {
+        extract_path(&self.slice)
+    }
+
+    pub fn mut_slice_path(&self) -> Option<&ExprPath> {
+        extract_path(&self.mut_slice)
+    }
+
+    pub fn str_path(&self) -> Option<&ExprPath> {
+        extract_path(&self.str)
+    }
+
+    pub fn mut_str_path(&self) -> Option<&ExprPath> {
+        extract_path(&self.mut_str)
+    }
+
+    pub fn bytes_path(&self) -> Option<&ExprPath> {
+        extract_path(&self.bytes)
+    }
+}
+
+fn extract_path(p: &Option<NameArgs<Option<ExprPath>>>) -> Option<&ExprPath> {
+    p.as_ref().and_then(|arg| arg.args.as_ref())
 }
