@@ -13,9 +13,9 @@ use super::Context;
 pub fn setter(ctx: &Context) -> Setter {
     let attrs = &ctx.field.attrs;
     let vis = ctx.vis();
-    let basename = ctx.field.basename().to_string();
-    let extend_setter = format_ident!("extend_{}{}", &basename, ctx.suffix());
-    let append_setter = format_ident!("append_{}{}", &basename, ctx.suffix());
+    let basename = ctx.field.basename();
+    let extend_setter = format_ident!("{}{}{}", ctx.with_prefix("extend"), &basename, ctx.suffix());
+    let append_setter = format_ident!("{}{}{}", ctx.with_prefix("append"), &basename, ctx.suffix());
 
     let (item_ty, extend_generic_param, append_generic): (
         _,

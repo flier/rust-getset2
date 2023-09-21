@@ -1,6 +1,6 @@
 use proc_macro2::{Span, TokenStream};
-use quote::ToTokens;
-use syn::{parse_quote_spanned, spanned::Spanned, Visibility};
+use quote::{format_ident, ToTokens};
+use syn::{parse_quote_spanned, spanned::Spanned, Ident, Visibility};
 
 use crate::{args, field::Field as BaseField};
 
@@ -48,14 +48,28 @@ impl<'a> Context<'a> {
     pub fn vis(&self) -> Visibility {
         args::vis(&self.field.args.vis, &self.struct_args.vis, &self.field.vis)
     }
-
-    pub fn prefix(&self) -> String {
-        self.with_prefix("set_")
+    pub fn method_name(&self) -> Ident {
+        format_ident!(
+            "{}{}{}",
+            self.prefix(),
+            self.field.basename(),
+            self.suffix()
+        )
     }
 
-    pub fn with_prefix(&self, default: &str) -> String {
+    pub fn prefix(&self) -> String {
+        self.prefix_arg().unwrap_or_else(|| "set_".to_string())
+    }
+
+    pub fn with_prefix(&self, prefix: &str) -> String {
+        self.prefix_arg().map_or_else(
+            || format!("{}_", prefix),
+            |arg| format!("{}_{}", arg, prefix),
+        )
+    }
+
+    pub fn prefix_arg(&self) -> Option<String> {
         args::prefix(&self.field.args.prefix, &self.struct_args.prefix)
-            .unwrap_or_else(|| default.to_string())
     }
 
     pub fn suffix(&self) -> String {

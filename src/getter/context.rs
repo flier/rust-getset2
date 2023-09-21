@@ -1,6 +1,6 @@
 use proc_macro2::{Span, TokenStream};
-use quote::ToTokens;
-use syn::{parse_quote_spanned, spanned::Spanned, Token, Visibility};
+use quote::{format_ident, ToTokens};
+use syn::{parse_quote_spanned, spanned::Spanned, Ident, Token, Visibility};
 
 use crate::{args, field::Field as BaseField};
 
@@ -52,11 +52,29 @@ impl<'a> Context<'a> {
         args::constness(&self.field.args.constness, &self.struct_args.constness)
     }
 
-    pub fn prefix(&self) -> String {
+    pub fn method_name(&self) -> Ident {
+        format_ident!(
+            "{}{}{}",
+            self.prefix(),
+            self.field.basename(),
+            self.suffix()
+        )
+    }
+
+    pub fn mut_method_name(&self) -> Ident {
+        format_ident!(
+            "{}{}{}_mut",
+            self.prefix(),
+            self.field.basename(),
+            self.suffix()
+        )
+    }
+
+    fn prefix(&self) -> String {
         args::prefix(&self.field.args.prefix, &self.struct_args.prefix).unwrap_or_default()
     }
 
-    pub fn suffix(&self) -> String {
+    fn suffix(&self) -> String {
         args::suffix(&self.field.args.suffix, &self.struct_args.suffix).unwrap_or_default()
     }
 }

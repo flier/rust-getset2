@@ -1,4 +1,3 @@
-use quote::format_ident;
 use syn::{parse_quote_spanned, spanned::Spanned, ItemFn};
 
 use crate::args;
@@ -8,8 +7,7 @@ use super::Context;
 pub fn setter(ctx: &Context) -> ItemFn {
     let attrs = &ctx.field.attrs;
     let vis = ctx.vis();
-    let basename = ctx.field.basename().to_string();
-    let method_name = format_ident!("{}{}{}", ctx.prefix(), basename, ctx.suffix());
+    let method_name = ctx.method_name();
     let ty = ctx.field.ty.clone();
     let field_name = ctx.field.name();
     let arg_name = ctx.field.basename();

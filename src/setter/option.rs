@@ -1,5 +1,4 @@
 use proc_macro_error::abort;
-use quote::format_ident;
 use syn::{parse_quote_spanned, spanned::Spanned, ItemFn, Type};
 
 use crate::{
@@ -12,8 +11,7 @@ use super::Context;
 pub fn setter(ctx: &Context) -> ItemFn {
     let attrs = &ctx.field.attrs;
     let vis = ctx.vis();
-    let basename = ctx.field.basename().to_string();
-    let method_name = format_ident!("{}{}{}", ctx.prefix(), basename, ctx.suffix());
+    let method_name = ctx.method_name();
     let inner_ty = ctx.option_inner_ty();
     let field_name = ctx.field.name();
     let arg_name = ctx.field.basename();
