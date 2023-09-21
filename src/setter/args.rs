@@ -51,6 +51,12 @@ pub struct FieldArgs {
     pub attr: Option<NameArgs<Vec<Meta>>>,
 }
 
+impl FieldArgs {
+    pub fn extend(&self) -> Option<&Extend> {
+        self.extend.as_ref().and_then(|arg| arg.args.as_ref())
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum Extend {
     Type(Type),

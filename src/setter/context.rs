@@ -76,7 +76,7 @@ impl<'a> ToTokens for Context<'a> {
         } else if self.is_option() {
             super::option::setter(self).to_tokens(tokens)
         } else if self.is_extend() {
-            super::extend::setter(self, tokens)
+            super::extend::setter(self).to_tokens(tokens)
         } else {
             super::gen::setter(self).to_tokens(tokens)
         }

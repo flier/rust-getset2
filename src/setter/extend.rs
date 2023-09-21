@@ -1,77 +1,90 @@
 use proc_macro2::TokenStream;
 use proc_macro_error::abort;
-use quote::{format_ident, quote_spanned, TokenStreamExt};
-use syn::{parse_quote, spanned::Spanned, Type, TypeParam};
+use quote::{format_ident, ToTokens};
+use syn::{
+    parse_quote, parse_quote_spanned, spanned::Spanned, GenericParam, Generics, ItemFn, Type,
+    TypeParam,
+};
 
 use crate::ty::{self, TypeExt};
 
 use super::Context;
 
-pub fn setter(ctx: &Context, tokens: &mut TokenStream) {
+pub fn setter(ctx: &Context) -> Setter {
     let attrs = &ctx.field.attrs;
     let vis = ctx.vis();
     let basename = ctx.field.basename().to_string();
     let extend_setter = format_ident!("extend_{}{}", &basename, ctx.suffix());
     let append_setter = format_ident!("append_{}{}", &basename, ctx.suffix());
-    let extend = ctx
-        .field
-        .args
-        .extend
-        .as_ref()
-        .and_then(|arg| arg.args.as_ref());
 
-    let (item_ty, extend_generic, append_generic) = if let Some(extend) = extend {
+    let (item_ty, extend_generic_param, append_generic): (
+        _,
+        Option<GenericParam>,
+        Option<Generics>,
+    ) = if let Some(extend) = ctx.field.args.extend() {
         use super::args::Extend::*;
 
         match extend {
-            Type(ty) => (
-                quote_spanned! { ty.span() =>
-                    #ty
-                },
-                None,
-                None,
-            ),
+            Type(ty) => (ty.clone(), None, None),
             Bound(param @ TypeParam { ident, .. }) => (
-                quote_spanned! { param.span() =>
+                parse_quote_spanned! { param.span() =>
                     #ident
                 },
-                Some(quote_spanned! { param.span() =>
-                    , #param
-                }),
-                Some(quote_spanned! {param.span() =>
+                Some(GenericParam::Type(param.clone())),
+                Some(parse_quote_spanned! { param.span() =>
                     < #param >
                 }),
             ),
         }
     } else {
-        let ty = ctx.extend_item_ty();
-
-        (
-            quote_spanned! { ty.span() =>
-                #ty
-            },
-            None,
-            None,
-        )
+        (ctx.extend_item_ty().clone(), None, None)
     };
+
+    let extend_generic: Generics = {
+        let params = Some(parse_quote_spanned! { ctx.field.ty.span() =>
+            ITER: ::std::iter::IntoIterator<Item = #item_ty>
+        })
+        .into_iter()
+        .chain(extend_generic_param);
+
+        parse_quote_spanned! { ctx.field.ty.span() =>
+            < #( #params ),* >
+        }
+    };
+
     let field_name = ctx.field.name();
     let arg_name = ctx.field.basename();
 
-    tokens.append_all(quote_spanned! { ctx.field.span() =>
-        #( #attrs )*
-        #[inline(always)]
-        #vis fn #extend_setter<ITER: ::std::iter::IntoIterator<Item = #item_ty> #extend_generic>(&mut self, #arg_name: ITER) -> &mut Self {
-            #field_name.extend(#arg_name);
-            self
-        }
+    Setter {
+        extend: parse_quote_spanned! { ctx.field.span() =>
+            #( #attrs )*
+            #[inline(always)]
+            #vis fn #extend_setter #extend_generic (&mut self, #arg_name: ITER) -> &mut Self {
+                #field_name.extend(#arg_name);
+                self
+            }
+        },
+        append: parse_quote_spanned! { ctx.field.span() =>
+            #( #attrs )*
+            #[inline(always)]
+            #vis fn #append_setter #append_generic (&mut self, #arg_name: #item_ty) -> &mut Self {
+                #field_name.extend([ #arg_name ]);
+                self
+            }
+        },
+    }
+}
 
-        #( #attrs )*
-        #[inline(always)]
-        #vis fn #append_setter #append_generic (&mut self, #arg_name: #item_ty) -> &mut Self {
-            #field_name.extend([ #arg_name ]);
-            self
-        }
-    })
+pub struct Setter {
+    extend: ItemFn,
+    append: ItemFn,
+}
+
+impl ToTokens for Setter {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.extend.to_tokens(tokens);
+        self.append.to_tokens(tokens);
+    }
 }
 
 const WELL_KNOWN_SEQ: &[&str] = &[
