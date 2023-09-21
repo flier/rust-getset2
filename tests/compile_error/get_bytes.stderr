@@ -1,0 +1,5 @@
+error: #[get(bytes(...))] need to specify the function that accesses the bytes
+ --> tests/compile_error/get_bytes.rs:6:12
+  |
+6 |     field: Foobar,
+  |            ^^^^^^

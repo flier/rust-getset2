@@ -16,9 +16,13 @@ pub trait TypeExt {
 
     fn ref_elem_ty(&self) -> Option<&Type>;
 
+    fn array_elem_ty(&self) -> Option<&Type>;
+
     fn option_inner_ty(&self) -> Option<&Type>;
 
     fn slice_inner_ty(&self) -> Option<&Type>;
+
+    fn inner_ty(&self, name: &str) -> Option<&Type>;
 }
 
 impl TypeExt for Type {
@@ -60,24 +64,24 @@ impl TypeExt for Type {
         }
     }
 
+    fn array_elem_ty(&self) -> Option<&Type> {
+        if let Type::Array(TypeArray { ref elem, .. }) = self {
+            Some(elem.as_ref())
+        } else {
+            None
+        }
+    }
+
     fn option_inner_ty(&self) -> Option<&Type> {
-        inner_ty(self, "Option")
+        self.inner_ty("Option")
     }
 
     fn slice_inner_ty(&self) -> Option<&Type> {
-        inner_ty(self, "Vec").or(array_elem_ty(self))
+        self.inner_ty("Vec").or(self.array_elem_ty())
     }
-}
 
-fn inner_ty<'a>(ty: &'a Type, name: &'a str) -> Option<&'a Type> {
-    generic_args_ty(ty, [name]).and_then(|args| args.into_iter().next())
-}
-
-fn array_elem_ty(ty: &Type) -> Option<&Type> {
-    if let Type::Array(TypeArray { ref elem, .. }) = ty {
-        Some(elem.as_ref())
-    } else {
-        None
+    fn inner_ty(&self, name: &str) -> Option<&Type> {
+        generic_args_ty(self, [name]).and_then(|args| args.into_iter().next())
     }
 }
 

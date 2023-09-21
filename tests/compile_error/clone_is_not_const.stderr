@@ -1,7 +1,0 @@
-error[E0015]: cannot call non-const fn `<usize as Clone>::clone` in constant functions
- --> tests/compile_error/clone_is_not_const.rs:6:5
-  |
-6 |     #[get(clone)]
-  |     ^
-  |
-  = note: calls in constant functions are limited to constant functions, tuple structs and tuple variants
