@@ -12,12 +12,18 @@ pub trait TypeExt {
 
     fn is_str(&self) -> bool;
 
+    fn ref_elem_ty(&self) -> Option<&Type>;
+
     fn option_inner_ty(&self) -> Option<&Type>;
 
     fn slice_inner_ty(&self) -> Option<&Type>;
 }
 
 impl TypeExt for Type {
+    fn is_str(&self) -> bool {
+        self.is_ref_ty("str")
+    }
+
     fn is_ty(&self, name: &str) -> bool {
         matches!(self,
             Type::Path(TypePath {
@@ -31,17 +37,21 @@ impl TypeExt for Type {
                     .unwrap_or_default())
     }
 
+    fn is_string(&self) -> bool {
+        self.is_ty("String")
+    }
+
     fn is_ref_ty(&self, name: &str) -> bool {
         matches!(self,
            Type::Reference(TypeReference { ref elem, .. }) if elem.as_ref().is_ty(name))
     }
 
-    fn is_string(&self) -> bool {
-        self.is_ty("String")
-    }
-
-    fn is_str(&self) -> bool {
-        self.is_ref_ty("str")
+    fn ref_elem_ty(&self) -> Option<&Type> {
+        if let Type::Reference(TypeReference { ref elem, .. }) = self {
+            Some(elem.as_ref())
+        } else {
+            None
+        }
     }
 
     fn option_inner_ty(&self) -> Option<&Type> {

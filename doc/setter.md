@@ -151,6 +151,13 @@ use getset2::{Getter, Setter};
 
 #[derive(Default, Getter, Setter)]
 pub struct Foo {
+    /// The generic getter will be generated
+    ///
+    /// ```
+    /// fn set_into_field<ARG>(&mut self, into_field: ARG) -> &mut Self
+    /// where
+    ///     ARG: ::std::convert::Into<String>
+    /// ```
     #[get(str)]
     #[set(into)]
     into_field: String,
@@ -159,21 +166,6 @@ pub struct Foo {
 let mut foo = Foo::default();
 
 assert_eq!(foo.set_into_field("bar").into_field(), "bar");
-```
-
-The following code will be generated.
-
-```rust,ignore
-impl Foo {
-    #[inline(always)]
-    fn set_into_field<ARG>(&mut self, into_field: ARG) -> &mut Self
-    where
-        ARG: ::std::convert::Into<String>,
-    {
-        self.into_field = ::std::convert::Into::into(into_field);
-        self
-    }
-}
 ```
 
 ### #[set(try_into)]
@@ -185,6 +177,16 @@ use getset2::{Getter, Setter};
 
 #[derive(Default, Getter, Setter)]
 pub struct Foo {
+    /// The generic getter will be generated
+    ///
+    /// ```
+    /// fn set_try_into_field<ARG>(
+    ///     &mut self,
+    ///     try_into_field: ARG,
+    /// ) -> ::std::result::Result<&mut Self, <ARG as ::std::convert::TryInto<i32>>::Error>
+    /// where
+    ///     ARG: ::std::convert::TryInto<i32>,
+    /// ```
     #[get(copy)]
     #[set(try_into)]
     try_into_field: i32,
@@ -194,25 +196,6 @@ fn main() {
     let mut foo = Foo::default();
 
     assert_eq!(foo.set_try_into_field(123).unwrap().try_into_field(), 123);
-}
-```
-
-The following code will be generated.
-
-```rust,ignore
-impl Foo {
-    #[inline(always)]
-    fn set_try_into_field<ARG>(
-        &mut self,
-        try_into_field: ARG,
-    ) -> ::std::result::Result<&mut Self, <ARG as ::std::convert::TryInto<i32>>::Error>
-    where
-        ARG: ::std::convert::TryInto<i32>,
-    {
-        self.try_into_field = ::std::convert::TryInto::<i32>::try_into(try_into_field)?;
-
-        Ok(self)
-    }
 }
 ```
 
@@ -361,21 +344,6 @@ struct Foo {
     #[set(attr(rustfmt::skip))]
     #[set(attr(clippy::cyclomatic_complexity = "100"))]
     bar: usize,
-}
-```
-
-The following code will be generated.
-
-```rust,ignore
- impl Foo {
-    ///test
-    #[rustfmt::skip]
-    #[clippy::cyclomatic_complexity = "100"]
-    #[inline(always)]
-    fn set_bar(&mut self, bar: usize) -> &mut Self {
-        self.bar = bar;
-        self
-    }
 }
 ```
 

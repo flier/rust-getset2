@@ -113,42 +113,46 @@ fn test_suffix() {
 
 #[test]
 fn test_get_copy() {
-    #[derive(Default, Getter)]
-    struct Foo {
+    #[derive(Getter)]
+    struct Foo<'a> {
         #[get(copy, mut)]
-        pub copy_field: usize,
+        copy_field: usize,
+
+        #[get(copy, mut)]
+        copy_ref_field: &'a usize,
     }
 
-    let mut foo = Foo::default();
+    let mut foo = Foo {
+        copy_field: 0,
+        copy_ref_field: &0,
+    };
 
     *foo.copy_field_mut() = 1;
+    assert_eq!(foo.copy_field(), 1);
 
-    let p = foo.copy_field();
-
-    *foo.copy_field_mut() = 2;
-
-    assert_eq!(p, 1);
-    assert_eq!(foo.copy_field(), 2);
+    *foo.copy_ref_field_mut() = &2;
+    assert_eq!(foo.copy_ref_field(), 2);
 }
 
 #[test]
 fn test_get_clone() {
-    #[derive(Default, Getter)]
-    struct Foo {
-        #[get(clone, mut)]
+    #[derive(Getter)]
+    struct Foo<'a> {
+        #[get(clone)]
         pub clone_field: PathBuf,
+
+        #[get(clone)]
+        pub clone_ref_field: &'a PathBuf,
     }
 
-    let mut foo = Foo::default();
+    let p = PathBuf::from("/tmp");
+    let foo = Foo {
+        clone_field: PathBuf::from("/tmp"),
+        clone_ref_field: &p,
+    };
 
-    foo.clone_field_mut().push("/tmp");
-
-    let p = foo.clone_field();
-
-    foo.clone_field_mut().push("clone");
-
-    assert_eq!(p, PathBuf::from("/tmp"));
-    assert_eq!(foo.clone_field(), PathBuf::from("/tmp/clone"));
+    assert_eq!(foo.clone_field(), PathBuf::from("/tmp"));
+    assert_eq!(foo.clone_ref_field(), Path::new("/tmp"));
 }
 
 #[test]

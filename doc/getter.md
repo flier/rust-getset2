@@ -117,6 +117,9 @@ use getset2::Getter;
 #[derive(Default, Getter)]
 #[get(copy)]
 struct Foo {
+    /// The `mut` getter will be generated
+    ///
+    /// `fn field_mut(&mut self) -> &mut usize`
     #[get(mut)]
     field: usize,
 }
@@ -127,22 +130,6 @@ fn main() {
     *foo.field_mut() = 1;
 
     assert_eq!(foo.field(), 1);
-}
-```
-
-The following code will be generated.
-
-```rust,ignore
-impl Foo {
-    #[inline(always)]
-    fn field(&self) -> usize {
-        self.field
-    }
-
-    #[inline(always)]
-    fn field_mut(&mut self) -> &mut usize {
-        &mut self.field
-    }
 }
 ```
 
@@ -226,15 +213,17 @@ fn main() {
 
 ## Result Type
 
-By default, the getter will return a reference to the field, you can use `clone` or `copy` attribute to customize the result type.
+By default, the getter will return a reference `&T` for the field type `T`, you can use `clone` or `copy` attribute to customize the result type.
 
 ```rust
 use std::path::PathBuf;
 use getset2::Getter;
 
-#[derive(Default, Getter)]
-#[get(pub, mut)]
-struct Foo {
+#[derive(Getter)]
+#[get(pub)]
+struct Foo<'a> {
+    /// by default, the result type is a reference of field type
+    ///
     /// `fn plain_field(&self) -> &usize`
     plain_field: usize,
 
@@ -242,38 +231,38 @@ struct Foo {
     #[get(clone)]
     clone_field: PathBuf,
 
+    /// `fn clone_ref_field(&self) -> PathBuf`
+    #[get(clone)]
+    clone_ref_field: &'a PathBuf,
+
     /// `fn copy_field(&self) -> usize`
     #[get(copy)]
     copy_field: usize,
+
+    /// `fn copy_ref_field(&self) -> usize`
+    #[get(copy)]
+    copy_ref_field: &'a usize,
 }
 
 fn main() {
-    let mut foo = Foo::default();
+    let p = PathBuf::from("/tmp");
+    let foo = Foo {
+        plain_field: 123,
+        clone_field: p.clone(),
+        clone_ref_field: &p,
+        copy_field: 123,
+        copy_ref_field: &123,
+    };
 
-    // the `mut` getter always return a mutable reference
-    *foo.plain_field_mut() = 123;
-
-    // by default, the result type is a reference of field type
     assert_eq!(foo.plain_field(), &123);
 
-    // push a directory to the `clone_field`
-    foo.clone_field_mut().push("/tmp");
-
-    // `p` should be a cloned `PathBuf`
-    let p = foo.clone_field();
-
-    // push a filename to the `clone_field`
-    foo.clone_field_mut().push("file");
-
-    // the cloned `PathBuf` should not be impacted
-    assert_eq!(p, PathBuf::from("/tmp"));
-    // the `clone_field` has changed
-    assert_eq!(foo.clone_field(), PathBuf::from("/tmp/file"));
-
-    *foo.copy_field_mut() = 123;
+    // the result type is `PathBuf`, not `&PathBuf`
+    assert_eq!(foo.clone_field(), p);
+    assert_eq!(foo.clone_ref_field(), p);
 
     // the result type is `usize`, not `&usize`
     assert_eq!(foo.copy_field(), 123);
+    assert_eq!(foo.copy_ref_field(), 123);
 }
 ```
 
